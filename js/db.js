@@ -19,7 +19,6 @@ class Database {
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
 
-                // Create trades store
                 if (!db.objectStoreNames.contains('trades')) {
                     const tradesStore = db.createObjectStore('trades', { keyPath: 'id', autoIncrement: true });
                     tradesStore.createIndex('symbol', 'symbol', { unique: false });
@@ -28,20 +27,17 @@ class Database {
                     tradesStore.createIndex('direction', 'direction', { unique: false });
                 }
 
-                // Create strategies store
                 if (!db.objectStoreNames.contains('strategies')) {
                     const strategiesStore = db.createObjectStore('strategies', { keyPath: 'id', autoIncrement: true });
                     strategiesStore.createIndex('name', 'name', { unique: false });
                 }
 
-                // Create journal store
                 if (!db.objectStoreNames.contains('journal')) {
                     const journalStore = db.createObjectStore('journal', { keyPath: 'id', autoIncrement: true });
                     journalStore.createIndex('date', 'date', { unique: false });
                     journalStore.createIndex('type', 'type', { unique: false });
                 }
 
-                // Create goals store
                 if (!db.objectStoreNames.contains('goals')) {
                     const goalsStore = db.createObjectStore('goals', { keyPath: 'id', autoIncrement: true });
                     goalsStore.createIndex('type', 'type', { unique: false });
@@ -50,7 +46,7 @@ class Database {
         });
     }
 
-    // Generic CRUD operations
+    // Generic CRUD
     async add(storeName, data) {
         const transaction = this.db.transaction([storeName], 'readwrite');
         const store = transaction.objectStore(storeName);
@@ -111,100 +107,75 @@ class Database {
         });
     }
 
-    // Trade-specific operations
+    // Trades
     async addTrade(trade) {
         trade.createdAt = new Date().toISOString();
         trade.updatedAt = new Date().toISOString();
         return await this.add('trades', trade);
     }
-
-    async getTrade(id) {
-        return await this.get('trades', id);
-    }
-
-    async getAllTrades() {
-        return await this.getAll('trades');
-    }
-
+    async getTrade(id) { return await this.get('trades', id); }
+    async getAllTrades() { return await this.getAll('trades'); }
     async updateTrade(trade) {
         trade.updatedAt = new Date().toISOString();
         return await this.update('trades', trade);
     }
+    async deleteTrade(id) { return await this.delete('trades', id); }
 
-    async deleteTrade(id) {
-        return await this.delete('trades', id);
-    }
-
-    // Strategy-specific operations
+    // Strategies
     async addStrategy(strategy) {
         strategy.createdAt = new Date().toISOString();
         return await this.add('strategies', strategy);
     }
+    async getAllStrategies() { return await this.getAll('strategies'); }
+    async updateStrategy(strategy) { return await this.update('strategies', strategy); }
+    async deleteStrategy(id) { return await this.delete('strategies', id); }
 
-    async getAllStrategies() {
-        return await this.getAll('strategies');
+    // Reviews (Daily / Weekly / Monthly journal entries)
+    async addReview(review) {
+        review.createdAt = new Date().toISOString();
+        return await this.add('journal', review);
     }
+    async getAllReviews() { return await this.getAll('journal'); }
+    async updateReview(review) { return await this.update('journal', review); }
+    async deleteReview(id) { return await this.delete('journal', id); }
 
-    async updateStrategy(strategy) {
-        return await this.update('strategies', strategy);
-    }
-
-    async deleteStrategy(id) {
-        return await this.delete('strategies', id);
-    }
-
-    // Goal-specific operations
+    // Goals
     async addGoal(goal) {
         goal.createdAt = new Date().toISOString();
         return await this.add('goals', goal);
     }
+    async getAllGoals() { return await this.getAll('goals'); }
+    async updateGoal(goal) { return await this.update('goals', goal); }
+    async deleteGoal(id) { return await this.delete('goals', id); }
 
-    async getAllGoals() {
-        return await this.getAll('goals');
-    }
-
-    async updateGoal(goal) {
-        return await this.update('goals', goal);
-    }
-
-    async deleteGoal(id) {
-        return await this.delete('goals', id);
-    }
-
-    // Export all data
+    // Export / Import
     async exportAllData() {
         const trades = await this.getAllTrades();
         const strategies = await this.getAllStrategies();
         const goals = await this.getAllGoals();
-        
+        const reviews = await this.getAllReviews();
+
         return {
             trades,
             strategies,
             goals,
+            reviews,
             exportDate: new Date().toISOString(),
-            version: '1.0.0'
+            version: '2.0.0'
         };
     }
 
-    // Import all data
     async importAllData(data) {
-        // Clear existing data
         await this.clear('trades');
         await this.clear('strategies');
         await this.clear('goals');
+        await this.clear('journal');
 
-        // Import new data
-        for (const trade of data.trades || []) {
-            await this.add('trades', trade);
-        }
-        for (const strategy of data.strategies || []) {
-            await this.add('strategies', strategy);
-        }
-        for (const goal of data.goals || []) {
-            await this.add('goals', goal);
-        }
+        for (const trade of data.trades || []) await this.add('trades', trade);
+        for (const strategy of data.strategies || []) await this.add('strategies', strategy);
+        for (const goal of data.goals || []) await this.add('goals', goal);
+        for (const review of data.reviews || []) await this.add('journal', review);
     }
 }
 
-// Create global database instance
 const db = new Database();
