@@ -2,10 +2,10 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-    --bg-primary: #0a0a0a;
-    --bg-secondary: #121212;
-    --bg-tertiary: #1a1a1a;
-    --bg-card: rgba(26, 26, 26, 0.6);
+    --bg-primary: #0f0f0f;
+    --bg-secondary: #161618;
+    --bg-tertiary: #1e1e20;
+    --bg-card: rgba(30, 30, 32, 0.7);
     --bg-glass: rgba(255, 255, 255, 0.03);
     --text-primary: #ffffff;
     --text-secondary: #a0a0a0;
@@ -140,7 +140,8 @@ body {
 /* Loading Screen */
 #loading-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: #0a0a0a; z-index: 9999;
+    background: radial-gradient(circle at center, #1a1a1e 0%, #0f0f0f 100%);
+    z-index: 9999;
     display: flex; align-items: center; justify-content: center;
     transition: opacity 0.5s ease;
 }
@@ -160,14 +161,16 @@ body {
 
 /* Landing Page */
 .landing-section {
-    min-height: 100vh; background: #0a0a0a; color: white;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at top left, #1a1a2e 0%, #0f0f0f 50%, #0a0a0a 100%);
+    color: white;
     display: flex; align-items: center; justify-content: center;
     padding: 2rem; opacity: 0; transition: opacity 0.5s ease;
     overflow: hidden;
 }
 .landing-section.visible { opacity: 1; }
 .landing-container {
-    max-width: 1200px; width: 100%; display: grid;
+    max-width: 1400px; width: 100%; display: grid;
     grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
 }
 .landing-badge {
@@ -186,26 +189,39 @@ body {
 .landing-buttons { display: flex; gap: 1rem; }
 .btn-large { padding: 1rem 2rem; font-size: 1rem; }
 
-/* Scrolling Grid Animation */
-.landing-visual { position: relative; height: 600px; overflow: hidden; }
+/* Scrolling Grid Animation - Clean and Contained */
+.landing-visual { 
+    position: relative; 
+    height: 500px; 
+    overflow: hidden;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+}
 .scrolling-grid {
-    display: flex; gap: 1.5rem; height: 200%;
-    animation: scrollUp 20s linear infinite;
+    display: flex; gap: 1.5rem; height: 100%;
 }
 .grid-column {
     flex: 1; display: flex; flex-direction: column; gap: 1.5rem;
+    animation: scrollUp 25s linear infinite;
 }
-.col-2 { margin-top: 3rem; /* Offset for masonry look */ }
+.col-2 { 
+    animation: scrollDown 25s linear infinite;
+    margin-top: 0;
+}
 .scroll-card {
-    background: #1a1a1a; border-radius: 12px; overflow: hidden;
+    background: #1a1a1e; border-radius: 16px; overflow: hidden;
     border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    height: 250px;
+    height: 220px; flex-shrink: 0;
 }
-.scroll-card img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+.scroll-card img { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
 
 @keyframes scrollUp {
     0% { transform: translateY(0); }
     100% { transform: translateY(-50%); }
+}
+@keyframes scrollDown {
+    0% { transform: translateY(-50%); }
+    100% { transform: translateY(0); }
 }
 
 /* Responsive Landing Page */
@@ -213,6 +229,6 @@ body {
     .landing-container { grid-template-columns: 1fr; text-align: center; }
     .landing-desc { margin: 0 auto 2rem auto; }
     .landing-buttons { justify-content: center; }
-    .landing-visual { display: none; /* Hide grid on mobile for simplicity */ }
+    .landing-visual { display: none; }
     .landing-title { font-size: 2.5rem; }
 }
