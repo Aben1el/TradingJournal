@@ -129,7 +129,7 @@
                         <p>Position size and risk/reward calculators to ensure proper risk management.</p>
                     </div>
                     <div class="feature-card reveal">
-                        <div class="feature-icon">🎯</div>
+                        <div class="feature-icon"></div>
                         <h3>Goal Setting</h3>
                         <p>Set trading goals and track your progress visually to stay motivated and disciplined.</p>
                     </div>
@@ -141,6 +141,9 @@
             </div>
         </section>
     </section>
+
+    <!-- Back to Home Button (Visible only in App) -->
+    <button id="backToHomeBtn" class="back-btn">← Home</button>
 
     <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebar" style="display: none;">
@@ -386,49 +389,92 @@
     <script src="js/app.js"></script>
     
     <script>
-        // Landing Page & Loading Screen Logic
+        // Navigation & Loading Screen Logic
         window.addEventListener('load', () => {
             const loadingScreen = document.getElementById('loading-screen');
             const landingPage = document.getElementById('landing-page');
             const mainApp = document.getElementById('mainContent');
             const sidebar = document.getElementById('sidebar');
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const backBtn = document.getElementById('backToHomeBtn');
             const enterBtns = document.querySelectorAll('.enter-btn, #enter-app-btn');
             const viewFeaturesBtn = document.getElementById('view-features-btn');
 
-            setTimeout(() => {
-                loadingScreen.classList.add('fade-out');
+            // Functions to switch views
+            function showJournal() {
+                landingPage.style.opacity = '0';
                 setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                    landingPage.style.display = 'block';
-                    setTimeout(() => {
-                        landingPage.classList.add('visible');
-                        initScrollReveal();
-                    }, 50);
-                }, 600);
-            }, 2000);
+                    landingPage.style.display = 'none';
+                    mainApp.style.display = 'block';
+                    sidebar.style.display = 'flex';
+                    mobileMenuToggle.style.display = 'block';
+                    backBtn.style.display = 'block';
+                    if (typeof app !== 'undefined') app.init();
+                    // Push state for browser back button
+                    history.pushState({ view: 'journal' }, '', '#journal');
+                }, 500);
+            }
 
-            enterBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    landingPage.style.opacity = '0';
+            function showLanding() {
+                mainApp.style.display = 'none';
+                sidebar.style.display = 'none';
+                mobileMenuToggle.style.display = 'none';
+                backBtn.style.display = 'none';
+                landingPage.style.display = 'block';
+                setTimeout(() => {
+                    landingPage.style.opacity = '1';
+                }, 50);
+            }
+
+            // Initial load check (if user refreshes on #journal)
+            if (window.location.hash === '#journal') {
+                loadingScreen.style.display = 'none';
+                showJournal();
+                // Replace state so back button works correctly from here
+                history.replaceState({ view: 'journal' }, '', '#journal');
+            } else {
+                // Normal flow: show loading screen then landing
+                setTimeout(() => {
+                    loadingScreen.classList.add('fade-out');
                     setTimeout(() => {
-                        landingPage.style.display = 'none';
-                        mainApp.style.display = 'block';
-                        sidebar.style.display = 'flex';
-                        mobileMenuToggle.style.display = 'block';
-                        if (typeof app !== 'undefined') {
-                            app.init();
-                        }
-                    }, 500);
-                });
+                        loadingScreen.style.display = 'none';
+                        landingPage.style.display = 'block';
+                        setTimeout(() => {
+                            landingPage.classList.add('visible');
+                            initScrollReveal();
+                        }, 50);
+                    }, 600);
+                }, 2000);
+            }
+
+            // Bind Enter buttons
+            enterBtns.forEach(btn => btn.addEventListener('click', showJournal));
+
+            // Bind Back button
+            backBtn.addEventListener('click', () => {
+                if (history.state && history.state.view === 'journal') {
+                    history.back(); // Triggers popstate
+                } else {
+                    showLanding();
+                }
             });
 
+            // Handle browser native back button
+            window.addEventListener('popstate', (event) => {
+                if (event.state && event.state.view === 'journal') {
+                    // If state says journal, ensure we are showing journal
+                    if(mainApp.style.display === 'none') showJournal();
+                } else {
+                    // Otherwise go back to landing
+                    showLanding();
+                }
+            });
+
+            // View Features scroll
             if (viewFeaturesBtn) {
                 viewFeaturesBtn.addEventListener('click', () => {
                     const featuresSection = document.getElementById('features-section');
-                    if (featuresSection) {
-                        featuresSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
+                    if (featuresSection) featuresSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             }
         });
@@ -442,10 +488,7 @@
                         observer.unobserve(entry.target);
                     }
                 });
-            }, {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            });
+            }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
             document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
         }
