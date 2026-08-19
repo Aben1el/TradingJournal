@@ -60,14 +60,15 @@
             </div>
         </nav>
 
-        <div class="landing-container">
-            <div class="landing-content">
+        <!-- Hero Section -->
+        <div class="hero-container">
+            <div class="hero-content">
                 <div class="landing-badge">Professional Trading Tool</div>
                 <h1 class="landing-title">Master Your<br>Trading Edge</h1>
                 <p class="landing-desc">Transform your trading with a professional journal designed for serious traders. Track performance, analyze psychology, and improve consistently.</p>
                 <div class="landing-buttons">
                     <button class="btn btn-primary btn-large enter-btn">Open Journal</button>
-                    <button class="btn btn-secondary btn-large">View Features</button>
+                    <button class="btn btn-secondary btn-large" id="view-features-btn">View Features</button>
                 </div>
             </div>
             <div class="landing-visual">
@@ -76,7 +77,6 @@
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80" alt="Chart"></div>
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=400&q=80" alt="Chart"></div>
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&q=80" alt="Chart"></div>
-                        <!-- Duplicate for seamless loop -->
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80" alt="Chart"></div>
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=400&q=80" alt="Chart"></div>
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&q=80" alt="Chart"></div>
@@ -85,7 +85,6 @@
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=80" alt="Chart"></div>
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&q=80" alt="Chart"></div>
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=80" alt="Chart"></div>
-                        <!-- Duplicate for seamless loop -->
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=80" alt="Chart"></div>
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&q=80" alt="Chart"></div>
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=80" alt="Chart"></div>
@@ -93,6 +92,51 @@
                 </div>
             </div>
         </div>
+
+        <!-- Features Section -->
+        <section id="features-section" class="features-section">
+            <div class="features-container">
+                <h2 class="features-title">Everything You Need to Trade Better</h2>
+                <p class="features-subtitle">Powerful tools designed for serious traders who want to improve consistently.</p>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Performance Dashboard</h3>
+                        <p>Track your win rate, profit factor, and equity curve with beautiful real-time charts.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <h3>Trade Journal</h3>
+                        <p>Log every trade with entry/exit details, screenshots, notes, and psychology tracking.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"></div>
+                        <h3>Strategy Tracking</h3>
+                        <p>Compare different strategies and discover which setups actually make you money.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🧠</div>
+                        <h3>Psychology Insights</h3>
+                        <p>Track emotions and discipline to identify patterns in your best and worst trades.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🧮</div>
+                        <h3>Risk Calculators</h3>
+                        <p>Position size and risk/reward calculators to ensure proper risk management.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Goal Setting</h3>
+                        <p>Set trading goals and track your progress visually to stay motivated and disciplined.</p>
+                    </div>
+                </div>
+
+                <div class="features-cta">
+                    <button class="btn btn-primary btn-large enter-btn">Start Trading Journal</button>
+                </div>
+            </div>
+        </section>
     </section>
 
     <!-- Sidebar Navigation -->
@@ -346,7 +390,8 @@
             const mainApp = document.getElementById('mainContent');
             const sidebar = document.getElementById('sidebar');
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-            const enterBtns = document.querySelectorAll('#enter-app-btn, .enter-btn');
+            const enterBtns = document.querySelectorAll('.enter-btn, #enter-app-btn');
+            const viewFeaturesBtn = document.getElementById('view-features-btn');
 
             setTimeout(() => {
                 loadingScreen.style.opacity = '0';
@@ -357,6 +402,7 @@
                 }, 500);
             }, 1500);
 
+            // Open Journal buttons
             enterBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     landingPage.style.opacity = '0';
@@ -371,6 +417,16 @@
                     }, 500);
                 });
             });
+
+            // View Features button - smooth scroll to features section
+            if (viewFeaturesBtn) {
+                viewFeaturesBtn.addEventListener('click', () => {
+                    const featuresSection = document.getElementById('features-section');
+                    if (featuresSection) {
+                        featuresSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            }
         });
     </script>
 </body>
