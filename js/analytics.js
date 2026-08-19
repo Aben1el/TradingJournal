@@ -1,201 +1,210 @@
-// Analytics Module
+// Analytics Module — every number is computed from real trade data
 
 class Analytics {
-    constructor() {
-        this.charts = {};
-    }
 
-    // Calculate all statistics
-    calculateStats(trades, filter = 'all') {
-        const filteredTrades = this.filterTradesByDate(trades, filter);
-        
-        if (filteredTrades.length === 0) {
+    calculateStats(trades) {
+        const t = trades || [];
+        if (t.length === 0) {
             return {
-                totalTrades: 0,
-                winRate: 0,
-                netPL: 0,
-                profitFactor: 0,
-                averageRR: 0,
-                averageWin: 0,
-                averageLoss: 0,
-                currentStreak: { type: 'none', count: 0 },
-                maxDrawdown: 0
+                totalTrades: 0, winRate: 0, lossRate: 0, netPL: 0, profitFactor: 0,
+                averageRR: 0, averageWin: 0, averageLoss: 0, bestTrade: 0, worstTrade: 0,
+                expectancy: 0, currentStreak: { type: 'none', count: 0 }, maxDrawdown: 0
             };
         }
-
-        const wins = filteredTrades.filter(t => t.profitLoss > 0);
-        const losses = filteredTrades.filter(t => t.profitLoss < 0);
-
+        const wins = t.filter(x => x.profitLoss > 0);
+        const losses = t.filter(x => x.profitLoss < 0);
+        const pls = t.map(x => x.profitLoss || 0);
         return {
-            totalTrades: filteredTrades.length,
-            winRate: calculateWinRate(filteredTrades),
-            netPL: calculateSum(filteredTrades, 'profitLoss'),
-            profitFactor: calculateProfitFactor(filteredTrades),
-            averageRR: calculateAverage(filteredTrades, 'rMultiple'),
-            averageWin: wins.length > 0 ? calculateSum(wins, 'profitLoss') / wins.length : 0,
-            averageLoss: losses.length > 0 ? calculateSum(losses, 'profitLoss') / losses.length : 0,
-            currentStreak: getCurrentStreak(filteredTrades),
-            maxDrawdown: calculateMaxDrawdown(filteredTrades)
+            totalTrades: t.length,
+            winRate: calculateWinRate(t),
+            lossRate: (losses.length / t.length) * 100,
+            netPL: calculateSum(t, 'profitLoss'),
+            profitFactor: calculateProfitFactor(t),
+            averageRR: calculateAverage(t, 'rMultiple'),
+            averageWin: wins.length ? calculateSum(wins, 'profitLoss') / wins.length : 0,
+            averageLoss: losses.length ? calculateSum(losses, 'profitLoss') / losses.length : 0,
+            bestTrade: Math.max(...pls),
+            worstTrade: Math.min(...pls),
+            expectancy: calculateExpectancy(t),
+            currentStreak: getCurrentStreak(t),
+            maxDrawdown: calculateMaxDrawdown(t)
         };
     }
 
-    // Filter trades by date range
     filterTradesByDate(trades, filter) {
-        if (filter === 'all') return trades;
-
+        if (filter === 'all') return trades || [];
         const now = new Date();
         let startDate;
-
         switch (filter) {
             case 'today':
                 startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 break;
             case 'week':
-                startDate = new Date(now);
-                startDate.setDate(now.getDate() - 7);
+                startDate = new Date(now); startDate.setDate(now.getDate() - 7);
                 break;
             case 'month':
-                startDate = new Date(now);
-                startDate.setMonth(now.getMonth() - 1);
+                startDate = new Date(now); startDate.setMonth(now.getMonth() - 1);
                 break;
             case 'year':
-                startDate = new Date(now);
-                startDate.setFullYear(now.getFullYear() - 1);
+                startDate = new Date(now); startDate.setFullYear(now.getFullYear() - 1);
                 break;
             default:
-                return trades;
+                return trades || [];
         }
-
-        return trades.filter(t => new Date(t.entryDate) >= startDate);
+        return (trades || []).filter(t => new Date(t.entryDate) >= startDate);
     }
 
-    // Get equity curve data
+    getTodayStats(trades) {
+        const t = trades || [];
+        const todayKey = new Date().toDateString();
+        const today = t.filter(x => new Date(x.entryDate).toDateString() === todayKey);
+        const totalPL = calculateSum(t, 'profitLoss');
+        const starting = parseFloat(localStorage.getItem('tv_starting_balance')) || 10000;
+        return {
+            todayPL: calculateSum(today, 'profitLoss'),
+            todayTrades: today.length,
+            totalPL,
+            currentBalance: starting + totalPL,
+            streak: getCurrentStreak(t)
+        };
+    }
+
+    getMonthlyDetail(trades, monthKey) {
+        const mt = (trades || []).filter(t => getMonthKey(t.entryDate) === monthKey);
+        if (mt.length === 0) {
+            return { trades: 0, pl: 0, winRate: 0, biggestWin: 0, biggestLoss: 0, bestDay: null, worstDay: null };
+        }
+        const wins = mt.filter(t => t.profitLoss > 0);
+        const losses = mt.filter(t => t.profitLoss < 0);
+        const dayMap = {};
+        mt.forEach(t => {
+            const k = String(t.entryDate).split('T')[0];
+            dayMap[k] = (dayMap[k] || 0) + (t.profitLoss || 0);
+        });
+        const days = Object.entries(dayMap).map(([k, pl]) => ({ k, pl }));
+        const best = days.reduce((a, b) => (b.pl > a.pl ? b : a), days[0]);
+        const worst = days.reduce((a, b) => (b.pl < a.pl ? b : a), days[0]);
+        return {
+            trades: mt.length,
+            pl: calculateSum(mt, 'profitLoss'),
+            winRate: calculateWinRate(mt),
+            biggestWin: wins.length ? Math.max(...wins.map(t => t.profitLoss)) : 0,
+            biggestLoss: losses.length ? Math.min(...losses.map(t => t.profitLoss)) : 0,
+            bestDay: best,
+            worstDay: worst
+        };
+    }
+
     getEquityCurveData(trades) {
-        if (!trades || trades.length === 0) {
-            return { labels: [], data: [] };
-        }
-
-        const sortedTrades = [...trades].sort((a, b) => 
-            new Date(a.entryDate) - new Date(b.entryDate)
-        );
-
-        const labels = [];
-        const data = [];
-        let cumulativePL = 0;
-
-        for (const trade of sortedTrades) {
-            cumulativePL += trade.profitLoss || 0;
+        if (!trades || trades.length === 0) return { labels: [], data: [] };
+        const sorted = [...trades].sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
+        const labels = [], data = [];
+        let cumulative = 0;
+        for (const trade of sorted) {
+            cumulative += trade.profitLoss || 0;
             labels.push(formatDate(trade.entryDate));
-            data.push(cumulativePL);
+            data.push(cumulative);
         }
-
         return { labels, data };
     }
 
-    // Get win/loss distribution
-    getWinLossDistribution(trades) {
-        const wins = trades.filter(t => t.profitLoss > 0).length;
-        const losses = trades.filter(t => t.profitLoss < 0).length;
-        const breakeven = trades.filter(t => t.profitLoss === 0).length;
+    getDailyPL(trades) {
+        const map = {};
+        (trades || []).forEach(t => {
+            const k = String(t.entryDate).split('T')[0];
+            map[k] = (map[k] || 0) + (t.profitLoss || 0);
+        });
+        const keys = Object.keys(map).sort().slice(-30);
+        return {
+            labels: keys.map(k => formatDate(k)),
+            data: keys.map(k => map[k]),
+            colors: keys.map(k => map[k] >= 0 ? '#10b981' : '#ef4444')
+        };
+    }
 
+    getWinLossDistribution(trades) {
+        const t = trades || [];
         return {
             labels: ['Wins', 'Losses', 'Breakeven'],
-            data: [wins, losses, breakeven],
+            data: [
+                t.filter(x => x.profitLoss > 0).length,
+                t.filter(x => x.profitLoss < 0).length,
+                t.filter(x => x.profitLoss === 0).length
+            ],
             colors: ['#10b981', '#ef4444', '#6b7280']
         };
     }
 
-    // Get performance by strategy
     getPerformanceByStrategy(trades) {
-        const strategyMap = {};
-
-        for (const trade of trades) {
-            const strategy = trade.strategy || 'Unknown';
-            if (!strategyMap[strategy]) {
-                strategyMap[strategy] = {
-                    trades: 0,
-                    pl: 0,
-                    wins: 0
-                };
-            }
-            strategyMap[strategy].trades++;
-            strategyMap[strategy].pl += trade.profitLoss || 0;
-            if (trade.profitLoss > 0) strategyMap[strategy].wins++;
-        }
-
-        const labels = Object.keys(strategyMap);
-        const data = labels.map(s => strategyMap[s].pl);
-        const colors = labels.map((_, i) => {
-            const hue = (i * 137.508) % 360;
-            return `hsl(${hue}, 70%, 60%)`;
-        });
-
-        return { labels, data, colors };
-    }
-
-    // Get profit by day of week
-    getProfitByDayOfWeek(trades) {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const dayMap = {};
-
-        for (const trade of trades) {
-            const day = new Date(trade.entryDate).getDay();
-            const dayName = days[day];
-            if (!dayMap[dayName]) {
-                dayMap[dayName] = 0;
-            }
-            dayMap[dayName] += trade.profitLoss || 0;
-        }
-
-        const labels = days;
-        const data = labels.map(day => dayMap[day] || 0);
-        const colors = data.map(pl => pl >= 0 ? '#10b981' : '#ef4444');
-
-        return { labels, data, colors };
-    }
-
-    // Get long vs short performance
-    getLongVsShortPerformance(trades) {
-        const longs = trades.filter(t => t.direction === 'long');
-        const shorts = trades.filter(t => t.direction === 'short');
-
-        const longPL = calculateSum(longs, 'profitLoss');
-        const shortPL = calculateSum(shorts, 'profitLoss');
-
+        const stats = this.getStrategyStats(trades);
+        const labels = Object.keys(stats);
         return {
-            labels: ['Long', 'Short'],
-            data: [longPL, shortPL],
-            colors: ['#10b981', '#ef4444']
+            labels,
+            data: labels.map(l => stats[l].pl),
+            colors: labels.map((_, i) => `hsl(${(i * 137.508) % 360}, 70%, 60%)`)
         };
     }
 
-    // Get monthly performance
-    getMonthlyPerformance(trades) {
-        const monthMap = {};
-
-        for (const trade of trades) {
-            const date = new Date(trade.entryDate);
-            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            
-            if (!monthMap[monthKey]) {
-                monthMap[monthKey] = 0;
-            }
-            monthMap[monthKey] += trade.profitLoss || 0;
-        }
-
-        const sortedMonths = Object.keys(monthMap).sort();
-        const labels = sortedMonths.map(m => {
-            const [year, month] = m.split('-');
-            const date = new Date(year, month - 1);
-            return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    getStrategyStats(trades) {
+        const groups = {};
+        (trades || []).forEach(t => {
+            const name = t.strategy || 'No Strategy';
+            (groups[name] = groups[name] || []).push(t);
         });
-        const data = sortedMonths.map(m => monthMap[m]);
-        const colors = data.map(pl => pl >= 0 ? '#10b981' : '#ef4444');
-
-        return { labels, data, colors };
+        const out = {};
+        Object.keys(groups).forEach(name => {
+            const arr = groups[name];
+            const wins = arr.filter(x => x.profitLoss > 0);
+            const losses = arr.filter(x => x.profitLoss < 0);
+            const pls = arr.map(x => x.profitLoss || 0);
+            out[name] = {
+                trades: arr.length,
+                wins: wins.length,
+                winRate: calculateWinRate(arr),
+                pl: calculateSum(arr, 'profitLoss'),
+                avgR: calculateAverage(arr, 'rMultiple'),
+                profitFactor: calculateProfitFactor(arr),
+                avgWin: wins.length ? calculateSum(wins, 'profitLoss') / wins.length : 0,
+                avgLoss: losses.length ? calculateSum(losses, 'profitLoss') / losses.length : 0,
+                best: pls.length ? Math.max(...pls) : 0,
+                worst: pls.length ? Math.min(...pls) : 0
+            };
+        });
+        return out;
     }
 
-    // Get R:R distribution
+    getProfitByDayOfWeek(trades) {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const map = {};
+        (trades || []).forEach(t => {
+            const d = days[new Date(t.entryDate).getDay()];
+            map[d] = (map[d] || 0) + (t.profitLoss || 0);
+        });
+        const data = days.map(d => map[d] || 0);
+        return { labels: days, data, colors: data.map(pl => pl >= 0 ? '#10b981' : '#ef4444') };
+    }
+
+    getLongVsShortPerformance(trades) {
+        const t = trades || [];
+        const longPL = calculateSum(t.filter(x => x.direction === 'long'), 'profitLoss');
+        const shortPL = calculateSum(t.filter(x => x.direction === 'short'), 'profitLoss');
+        return { labels: ['Long', 'Short'], data: [longPL, shortPL], colors: ['#10b981', '#ef4444'] };
+    }
+
+    getMonthlyPerformance(trades) {
+        const map = {};
+        (trades || []).forEach(t => {
+            const k = getMonthKey(t.entryDate);
+            map[k] = (map[k] || 0) + (t.profitLoss || 0);
+        });
+        const keys = Object.keys(map).sort();
+        return {
+            labels: keys.map(k => formatMonthKey(k)),
+            data: keys.map(k => map[k]),
+            colors: keys.map(k => map[k] >= 0 ? '#10b981' : '#ef4444')
+        };
+    }
+
     getRRDistribution(trades) {
         const ranges = [
             { label: '< 0R', min: -Infinity, max: 0 },
@@ -205,157 +214,180 @@ class Analytics {
             { label: '3-5R', min: 3, max: 5 },
             { label: '> 5R', min: 5, max: Infinity }
         ];
-
-        const distribution = ranges.map(range => {
-            const count = trades.filter(t => {
-                const r = t.rMultiple || 0;
-                return r >= range.min && r < range.max;
-            }).length;
-            return count;
-        });
-
+        const data = ranges.map(r => (trades || []).filter(t => {
+            const rM = t.rMultiple || 0;
+            return rM >= r.min && rM < r.max;
+        }).length);
         return {
             labels: ranges.map(r => r.label),
-            data: distribution,
-            colors: distribution.map((_, i) => {
-                const hue = (i * 60) % 360;
-                return `hsl(${hue}, 70%, 60%)`;
-            })
+            data,
+            colors: data.map((_, i) => `hsl(${(i * 60) % 360}, 70%, 60%)`)
         };
     }
 
-    // Get performance by session
     getPerformanceBySession(trades) {
-        const sessionMap = {};
-
-        for (const trade of trades) {
-            const session = trade.session || 'Unknown';
-            if (!sessionMap[session]) {
-                sessionMap[session] = { trades: 0, pl: 0 };
-            }
-            sessionMap[session].trades++;
-            sessionMap[session].pl += trade.profitLoss || 0;
-        }
-
-        const labels = Object.keys(sessionMap);
-        const data = labels.map(s => sessionMap[s].pl);
-        const colors = labels.map((_, i) => {
-            const hue = (i * 137.508) % 360;
-            return `hsl(${hue}, 70%, 60%)`;
+        const map = {};
+        (trades || []).forEach(t => {
+            const s = t.session || 'Unknown';
+            if (!map[s]) map[s] = { trades: 0, pl: 0 };
+            map[s].trades++;
+            map[s].pl += t.profitLoss || 0;
         });
-
-        return { labels, data, colors };
-    }
-
-    // Get top performing assets
-    getTopAssets(trades, limit = 10) {
-        const assetMap = {};
-
-        for (const trade of trades) {
-            const asset = trade.symbol || 'Unknown';
-            if (!assetMap[asset]) {
-                assetMap[asset] = 0;
-            }
-            assetMap[asset] += trade.profitLoss || 0;
-        }
-
-        const sorted = Object.entries(assetMap)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, limit);
-
+        const labels = Object.keys(map);
+        const data = labels.map(l => map[l].pl);
         return {
-            labels: sorted.map(([asset]) => asset),
-            data: sorted.map(([, pl]) => pl),
-            colors: sorted.map(([, pl]) => pl >= 0 ? '#10b981' : '#ef4444')
+            labels, data,
+            colors: labels.map((_, i) => `hsl(${(i * 137.508) % 360}, 70%, 60%)`)
         };
     }
 
-    // Get psychology insights
+    getDisciplineBands(trades) {
+        const bands = [
+            { label: 'Discipline 8–10', min: 8, max: 10 },
+            { label: 'Discipline 5–7', min: 5, max: 7 },
+            { label: 'Discipline 1–4', min: 1, max: 4 }
+        ];
+        return bands.map(b => {
+            const arr = (trades || []).filter(t => t.discipline >= b.min && t.discipline <= b.max);
+            return {
+                label: b.label,
+                count: arr.length,
+                avgPL: arr.length ? calculateSum(arr, 'profitLoss') / arr.length : 0,
+                winRate: arr.length ? calculateWinRate(arr) : 0
+            };
+        });
+    }
+
+    // Smart Insights — only patterns supported by real data
+    getSmartInsights(trades) {
+        const t = trades || [];
+        if (t.length < 10) {
+            return [{ type: 'neutral', text: '<strong>Not enough trading data yet.</strong> Record at least 10–20 trades to start discovering meaningful patterns.' }];
+        }
+        const out = [];
+
+        // Best strategy
+        const stratList = Object.entries(this.getStrategyStats(t)).filter(([n, s]) => s.trades >= 3 && n !== 'No Strategy');
+        if (stratList.length) {
+            stratList.sort((a, b) => b[1].pl - a[1].pl);
+            const [name, s] = stratList[0];
+            if (s.pl > 0) out.push({ type: 'positive', text: `Your best-performing strategy is <strong>${name}</strong> with ${formatCurrency(s.pl)} net P/L across ${s.trades} trades.` });
+        }
+
+        // Session performance
+        const ses = {};
+        t.forEach(x => { if (x.session) (ses[x.session] = ses[x.session] || []).push(x); });
+        const sesList = Object.entries(ses).filter(([n, arr]) => arr.length >= 3);
+        if (sesList.length >= 2) {
+            sesList.sort((a, b) => calculateSum(b[1], 'profitLoss') - calculateSum(a[1], 'profitLoss'));
+            const [bn, barr] = sesList[0];
+            const [wn, warr] = sesList[sesList.length - 1];
+            const bpl = calculateSum(barr, 'profitLoss'), wpl = calculateSum(warr, 'profitLoss');
+            if (bpl > wpl) out.push({ type: 'positive', text: `You perform better during the <strong>${bn}</strong> session (${formatCurrency(bpl)} vs ${formatCurrency(wpl)} in ${wn}).` });
+        }
+
+        // Long vs short win rate
+        const longs = t.filter(x => x.direction === 'long');
+        const shorts = t.filter(x => x.direction === 'short');
+        if (longs.length >= 3 && shorts.length >= 3) {
+            const lw = calculateWinRate(longs), sw = calculateWinRate(shorts);
+            if (Math.abs(lw - sw) >= 10) {
+                out.push({ type: 'positive', text: `Your win rate is higher on <strong>${lw > sw ? 'long' : 'short'} positions</strong> (${formatPercentage(Math.max(lw, sw))} vs ${formatPercentage(Math.min(lw, sw))}).` });
+            }
+        }
+
+        // Revenge trading detection
+        const sorted = [...t].sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
+        let consec = 0;
+        const revenge = [];
+        sorted.forEach(x => {
+            if (consec >= 2) revenge.push(x);
+            consec = (x.profitLoss < 0) ? consec + 1 : 0;
+        });
+        if (revenge.length >= 3) {
+            out.push({ type: 'negative', text: `You took <strong>${revenge.length} trades after consecutive losses</strong> with a ${formatPercentage(calculateWinRate(revenge))} win rate vs ${formatPercentage(calculateWinRate(t))} overall. Consider pausing after losing streaks.` });
+        }
+
+        // Month-over-month
+        const curKey = getMonthKey(new Date());
+        const cur = this.getMonthlyDetail(t, curKey);
+        const prev = this.getMonthlyDetail(t, shiftMonthKey(curKey, -1));
+        if (cur.trades >= 3 && prev.trades >= 3) {
+            if (cur.pl > prev.pl) out.push({ type: 'positive', text: `Your performance has <strong>improved compared with last month</strong> (${formatCurrency(cur.pl)} vs ${formatCurrency(prev.pl)}).` });
+            else out.push({ type: 'negative', text: `This month's P/L (${formatCurrency(cur.pl)}) is <strong>below last month</strong> (${formatCurrency(prev.pl)}). Review what changed.` });
+        }
+
+        // Best day of week
+        const dayMap = {};
+        t.forEach(x => {
+            const d = new Date(x.entryDate).toLocaleDateString('en-US', { weekday: 'long' });
+            (dayMap[d] = dayMap[d] || []).push(x);
+        });
+        const dayList = Object.entries(dayMap).filter(([n, a]) => a.length >= 3);
+        if (dayList.length >= 2) {
+            dayList.sort((a, b) => calculateSum(b[1], 'profitLoss') - calculateSum(a[1], 'profitLoss'));
+            const [bd, barr] = dayList[0];
+            const bpl = calculateSum(barr, 'profitLoss');
+            if (bpl > 0) out.push({ type: 'positive', text: `<strong>${bd}</strong> is your strongest day with ${formatCurrency(bpl)} total P/L.` });
+        }
+
+        // Discipline impact
+        const hi = t.filter(x => x.discipline >= 8);
+        const lo = t.filter(x => x.discipline >= 1 && x.discipline <= 4);
+        if (hi.length >= 3 && lo.length >= 3) {
+            out.push({ type: 'positive', text: `Trades with <strong>discipline 8–10</strong> average ${formatCurrency(calculateSum(hi, 'profitLoss') / hi.length)}, while discipline 1–4 averages ${formatCurrency(calculateSum(lo, 'profitLoss') / lo.length)}.` });
+        }
+
+        return out.slice(0, 5);
+    }
+
     getPsychologyInsights(trades) {
+        const t = trades || [];
         const insights = [];
+        if (t.length < 5) return ['Add more trades to see psychology insights.'];
 
-        if (trades.length < 5) {
-            return ['Add more trades to see psychology insights.'];
+        const high = t.filter(x => x.discipline >= 8);
+        const low = t.filter(x => x.discipline >= 1 && x.discipline < 5);
+        if (high.length > 0 && low.length > 0) {
+            const hw = calculateWinRate(high), lw = calculateWinRate(low);
+            if (hw > lw + 10) insights.push(`Your win rate is ${formatPercentage(hw)} when discipline is 8+ vs ${formatPercentage(lw)} when below 5.`);
         }
 
-        // Discipline analysis
-        const highDiscipline = trades.filter(t => t.discipline >= 8);
-        const lowDiscipline = trades.filter(t => t.discipline && t.discipline < 5);
-
-        if (highDiscipline.length > 0 && lowDiscipline.length > 0) {
-            const highWinRate = calculateWinRate(highDiscipline);
-            const lowWinRate = calculateWinRate(lowDiscipline);
-
-            if (highWinRate > lowWinRate + 10) {
-                insights.push(`Your win rate is ${formatPercentage(highWinRate)} when discipline is 8+ vs ${formatPercentage(lowWinRate)} when below 5.`);
-            }
+        const conf = t.filter(x => x.confidence >= 8);
+        if (conf.length >= 3) {
+            const avg = calculateAverage(conf, 'profitLoss');
+            if (avg > 0) insights.push(`High confidence trades (8+) average ${formatCurrency(avg)} profit.`);
         }
 
-        // Confidence analysis
-        const highConfidence = trades.filter(t => t.confidence >= 8);
-        if (highConfidence.length >= 3) {
-            const avgPL = calculateAverage(highConfidence, 'profitLoss');
-            if (avgPL > 0) {
-                insights.push(`High confidence trades (8+) average ${formatCurrency(avgPL)} profit.`);
-            }
-        }
-
-        // Emotion analysis
         const emotionMap = {};
-        for (const trade of trades) {
-            const emotion = trade.emotionBefore;
-            if (emotion) {
-                if (!emotionMap[emotion]) {
-                    emotionMap[emotion] = { trades: [], pl: 0 };
-                }
-                emotionMap[emotion].trades.push(trade);
-                emotionMap[emotion].pl += trade.profitLoss || 0;
+        t.forEach(x => {
+            if (x.emotionBefore) {
+                if (!emotionMap[x.emotionBefore]) emotionMap[x.emotionBefore] = { trades: [], pl: 0 };
+                emotionMap[x.emotionBefore].trades.push(x);
+                emotionMap[x.emotionBefore].pl += x.profitLoss || 0;
             }
+        });
+        const best = Object.entries(emotionMap).sort((a, b) => b[1].pl - a[1].pl)[0];
+        if (best && best[1].trades.length >= 3) {
+            insights.push(`Your best performing emotion state is "${best[0]}" with ${formatCurrency(best[1].pl)} total P/L.`);
         }
 
-        const bestEmotion = Object.entries(emotionMap)
-            .sort((a, b) => b[1].pl - a[1].pl)[0];
-
-        if (bestEmotion && bestEmotion[1].trades.length >= 3) {
-            insights.push(`Your best performing emotion state is "${bestEmotion[0]}" with ${formatCurrency(bestEmotion[1].pl)} total P/L.`);
-        }
-
-        if (insights.length === 0) {
-            insights.push('Continue tracking your trades to unlock more insights.');
-        }
-
+        if (insights.length === 0) insights.push('Continue tracking your trades to unlock more insights.');
         return insights;
     }
 
-    // Get emotion statistics
     getEmotionStats(trades) {
         const emotions = {};
-
-        for (const trade of trades) {
-            const emotion = trade.emotionBefore;
-            if (emotion) {
-                if (!emotions[emotion]) {
-                    emotions[emotion] = { count: 0, pl: 0 };
-                }
-                emotions[emotion].count++;
-                emotions[emotion].pl += trade.profitLoss || 0;
+        (trades || []).forEach(x => {
+            if (x.emotionBefore) {
+                if (!emotions[x.emotionBefore]) emotions[x.emotionBefore] = { count: 0, pl: 0 };
+                emotions[x.emotionBefore].count++;
+                emotions[x.emotionBefore].pl += x.profitLoss || 0;
             }
-        }
-
-        return Object.entries(emotions).map(([emotion, stats]) => ({
-            emotion,
-            count: stats.count,
-            avgPL: stats.pl / stats.count,
-            totalPL: stats.pl
-        }));
-    }
-
-    // Destroy all charts
-    destroyCharts() {
-        Object.values(this.charts).forEach(chart => {
-            if (chart) chart.destroy();
         });
-        this.charts = {};
+        return Object.entries(emotions).map(([emotion, s]) => ({
+            emotion, count: s.count, avgPL: s.pl / s.count, totalPL: s.pl
+        }));
     }
 }
 
