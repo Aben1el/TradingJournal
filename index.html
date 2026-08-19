@@ -13,8 +13,54 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader-content">
+            <svg width="64" height="64" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="8" fill="url(#logo-gradient)"/>
+                <path d="M8 20L12 16L16 18L24 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs>
+                    <linearGradient id="logo-gradient" x1="0" y1="0" x2="32" y2="32">
+                        <stop stop-color="#6366f1"/>
+                        <stop offset="1" stop-color="#8b5cf6"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+            <div class="loader-text">EdgeJournal</div>
+        </div>
+    </div>
+
+    <!-- Landing Page -->
+    <section id="landing-page" class="landing-section" style="display: none;">
+        <div class="landing-container">
+            <div class="landing-content">
+                <div class="landing-badge">Professional Trading Tool</div>
+                <h1 class="landing-title">Master Your <br>Trading Edge</h1>
+                <p class="landing-desc">Transform your trading with a professional journal designed for serious traders. Track performance, analyze psychology, and improve consistently.</p>
+                <div class="landing-buttons">
+                    <button class="btn btn-primary btn-large" id="enter-app-btn">Open Journal</button>
+                    <button class="btn btn-secondary btn-large">View Features</button>
+                </div>
+            </div>
+            <div class="landing-visual">
+                <div class="scrolling-grid">
+                    <div class="grid-column col-1">
+                        <div class="scroll-card"><img src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80" alt="Chart"></div>
+                        <div class="scroll-card"><img src="https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=400&q=80" alt="Chart"></div>
+                        <div class="scroll-card"><img src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&q=80" alt="Chart"></div>
+                    </div>
+                    <div class="grid-column col-2">
+                        <div class="scroll-card"><img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=80" alt="Chart"></div>
+                        <div class="scroll-card"><img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&q=80" alt="Chart"></div>
+                        <div class="scroll-card"><img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=80" alt="Chart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Sidebar Navigation -->
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar" style="display: none;">
         <div class="sidebar-header">
             <div class="logo">
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -81,11 +127,11 @@
         </div>
     </aside>
     
-    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" style="display: none;">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     
-    <main class="main-content" id="mainContent">
+    <main class="main-content" id="mainContent" style="display: none;">
         <!-- Dashboard -->
         <section class="section active" id="dashboard">
             <div class="section-header">
@@ -255,5 +301,43 @@
     <script src="js/psychology.js"></script>
     <script src="js/goals.js"></script>
     <script src="js/app.js"></script>
+    
+    <script>
+        // Landing Page & Loading Screen Logic
+        window.addEventListener('load', () => {
+            const loadingScreen = document.getElementById('loading-screen');
+            const landingPage = document.getElementById('landing-page');
+            const mainApp = document.getElementById('mainContent');
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const enterBtn = document.getElementById('enter-app-btn');
+
+            // Show loading screen for 1.5 seconds, then show landing page
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    landingPage.style.display = 'block';
+                    // Trigger animation
+                    setTimeout(() => landingPage.classList.add('visible'), 50);
+                }, 500);
+            }, 1500);
+
+            // When "Open Journal" is clicked, hide landing page and show app
+            enterBtn.addEventListener('click', () => {
+                landingPage.style.opacity = '0';
+                setTimeout(() => {
+                    landingPage.style.display = 'none';
+                    mainApp.style.display = 'block';
+                    sidebar.style.display = 'flex';
+                    mobileMenuToggle.style.display = 'block';
+                    // Initialize the app now that it's visible
+                    if (typeof app !== 'undefined') {
+                        app.init();
+                    }
+                }, 500);
+            });
+        });
+    </script>
 </body>
 </html>
