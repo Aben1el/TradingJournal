@@ -87,3 +87,16 @@
     .trade-card-body { grid-template-columns: 1fr; }
     .calculators-grid, .psychology-grid { grid-template-columns: 1fr; }
 }
+/* Screenshot Styles */
+.trade-screenshot-container {
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.trade-screenshot-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
