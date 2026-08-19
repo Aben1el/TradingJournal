@@ -107,6 +107,13 @@
             </div>
         </div>
 
+        <!-- CINEMATIC GIF DIVIDER -->
+        <div class="cinematic-divider reveal">
+            <img src="Images/scene.gif" alt="Visual Element">
+            <div class="divider-fade-top"></div>
+            <div class="divider-fade-bottom"></div>
+        </div>
+
         <!-- Features Section -->
         <section id="features-section" class="features-section">
             <div class="features-container">
@@ -115,17 +122,17 @@
                 
                 <div class="features-grid">
                     <div class="feature-card reveal">
-                        <div class="feature-icon">📊</div>
+                        <div class="feature-icon"></div>
                         <h3>Performance Dashboard</h3>
                         <p>Track your win rate, profit factor, and equity curve with beautiful real-time charts.</p>
                     </div>
                     <div class="feature-card reveal">
-                        <div class="feature-icon"></div>
+                        <div class="feature-icon">📝</div>
                         <h3>Trade Journal</h3>
                         <p>Log every trade with entry/exit details, screenshots, notes, and psychology tracking.</p>
                     </div>
                     <div class="feature-card reveal">
-                        <div class="feature-icon">🎯</div>
+                        <div class="feature-icon"></div>
                         <h3>Strategy Tracking</h3>
                         <p>Compare different strategies and discover which setups actually make you money.</p>
                     </div>
@@ -411,7 +418,6 @@
             const enterBtns = document.querySelectorAll('.enter-btn, #enter-app-btn');
             const viewFeaturesBtn = document.getElementById('view-features-btn');
 
-            // Functions to switch views
             function showJournal() {
                 landingPage.style.opacity = '0';
                 setTimeout(() => {
@@ -421,7 +427,6 @@
                     mobileMenuToggle.style.display = 'block';
                     backBtn.style.display = 'block';
                     if (typeof app !== 'undefined') app.init();
-                    // Push state for browser back button
                     history.pushState({ view: 'journal' }, '', '#journal');
                 }, 500);
             }
@@ -432,19 +437,14 @@
                 mobileMenuToggle.style.display = 'none';
                 backBtn.style.display = 'none';
                 landingPage.style.display = 'block';
-                setTimeout(() => {
-                    landingPage.style.opacity = '1';
-                }, 50);
+                setTimeout(() => { landingPage.style.opacity = '1'; }, 50);
             }
 
-            // Initial load check (if user refreshes on #journal)
             if (window.location.hash === '#journal') {
                 loadingScreen.style.display = 'none';
                 showJournal();
-                // Replace state so back button works correctly from here
                 history.replaceState({ view: 'journal' }, '', '#journal');
             } else {
-                // Normal flow: show loading screen then landing
                 setTimeout(() => {
                     loadingScreen.classList.add('fade-out');
                     setTimeout(() => {
@@ -458,30 +458,24 @@
                 }, 2000);
             }
 
-            // Bind Enter buttons
             enterBtns.forEach(btn => btn.addEventListener('click', showJournal));
 
-            // Bind Back button
             backBtn.addEventListener('click', () => {
                 if (history.state && history.state.view === 'journal') {
-                    history.back(); // Triggers popstate
+                    history.back();
                 } else {
                     showLanding();
                 }
             });
 
-            // Handle browser native back button
             window.addEventListener('popstate', (event) => {
                 if (event.state && event.state.view === 'journal') {
-                    // If state says journal, ensure we are showing journal
                     if(mainApp.style.display === 'none') showJournal();
                 } else {
-                    // Otherwise go back to landing
                     showLanding();
                 }
             });
 
-            // View Features scroll
             if (viewFeaturesBtn) {
                 viewFeaturesBtn.addEventListener('click', () => {
                     const featuresSection = document.getElementById('features-section');
@@ -490,7 +484,6 @@
             }
         });
 
-        // Scroll Reveal Animation
         function initScrollReveal() {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
