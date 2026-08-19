@@ -90,7 +90,7 @@ class Trades {
                 <td><span class="badge ${t.profitLoss > 0 ? 'badge-success' : t.profitLoss < 0 ? 'badge-danger' : 'badge-neutral'}">${t.profitLoss > 0 ? 'Win' : t.profitLoss < 0 ? 'Loss' : 'BE'}</span></td>
                 <td>
                     <div class="table-actions">
-                        <button class="table-action-btn" onclick="event.stopPropagation(); trades.showTradeModal(${t.id})">️</button>
+                        <button class="table-action-btn" onclick="event.stopPropagation(); trades.showTradeModal(${t.id})">✏️</button>
                         <button class="table-action-btn delete" onclick="event.stopPropagation(); trades.deleteTrade(${t.id})">🗑️</button>
                     </div>
                 </td>
@@ -153,6 +153,12 @@ class Trades {
                         <div class="form-group"><label>Confidence (1-10)</label><input type="number" min="1" max="10" class="form-control" name="confidence" value="${trade?.confidence || ''}"></div>
                     </div>
                     <div class="form-group" style="margin-top:1rem;"><label>Notes</label><textarea class="form-control" name="notes" rows="3">${trade?.notes || ''}</textarea></div>
+                    
+                    <div class="form-group" style="margin-top:1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                        <label>Chart Screenshot</label>
+                        <input type="file" class="form-control" id="screenshotInput" accept="image/*">
+                        ${trade?.screenshot ? `<div class="trade-screenshot-container"><img src="${trade.screenshot}" alt="Current Screenshot"></div>` : ''}
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -179,20 +185,39 @@ class Trades {
             if (data.discipline) data.discipline = parseInt(data.discipline);
             if (data.confidence) data.confidence = parseInt(data.confidence);
 
-            try {
-                if (tradeId) {
-                    data.id = tradeId;
-                    await db.updateTrade(data);
-                    showToast('Trade updated successfully!');
-                } else {
-                    await db.addTrade(data);
-                    showToast('Trade added successfully!');
+            const fileInput = document.getElementById('screenshotInput');
+            
+            const saveToDatabase = async (finalData) => {
+                try {
+                    if (tradeId) {
+                        finalData.id = tradeId;
+                        await db.updateTrade(finalData);
+                        showToast('Trade updated successfully!');
+                    } else {
+                        await db.addTrade(finalData);
+                        showToast('Trade added successfully!');
+                    }
+                    app.closeModal();
+                    this.loadTrades();
+                    dashboard.loadDashboard();
+                } catch (e) {
+                    showToast('Error saving trade', 'error');
                 }
-                app.closeModal();
-                this.loadTrades();
-                dashboard.loadDashboard();
-            } catch (e) {
-                showToast('Error saving trade', 'error');
+            };
+
+            if (fileInput && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    data.screenshot = e.target.result;
+                    saveToDatabase(data);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                // If editing and no new file, keep old screenshot
+                if (trade && trade.screenshot) {
+                    data.screenshot = trade.screenshot;
+                }
+                saveToDatabase(data);
             }
         };
     }
@@ -247,6 +272,13 @@ class Trades {
                         </div>
                     </div>
                     ${trade.notes ? `<div class="trade-detail-section"><h4>Notes</h4><p>${trade.notes}</p></div>` : ''}
+                    ${trade.screenshot ? `
+                    <div class="trade-detail-section">
+                        <h4>Chart Screenshot</h4>
+                        <div class="trade-screenshot-container">
+                            <img src="${trade.screenshot}" alt="Trade Chart">
+                        </div>
+                    </div>` : ''}
                 </div>
             </div>
             <div class="modal-footer">
