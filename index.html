@@ -17,26 +17,29 @@
     <!-- Loading Screen -->
     <div id="loading-screen">
         <div class="loader-content">
-            <svg width="64" height="64" viewBox="0 0 32 32" fill="none">
-                <rect width="32" height="32" rx="8" fill="url(#logo-gradient)"/>
-                <path d="M8 20L12 16L16 18L24 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <defs>
-                    <linearGradient id="logo-gradient" x1="0" y1="0" x2="32" y2="32">
-                        <stop stop-color="#6366f1"/>
-                        <stop offset="1" stop-color="#8b5cf6"/>
-                    </linearGradient>
-                </defs>
-            </svg>
+            <div class="loader-logo-wrapper">
+                <svg class="loader-logo" width="56" height="56" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="8" fill="#0a0a0a" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+                    <path d="M8 20L12 16L16 18L24 10" stroke="url(#logo-gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <defs>
+                        <linearGradient id="logo-gradient" x1="0" y1="0" x2="32" y2="32">
+                            <stop stop-color="#6366f1"/>
+                            <stop offset="1" stop-color="#8b5cf6"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="loader-ring"></div>
+            </div>
             <div class="loader-text">TradeVault</div>
         </div>
     </div>
 
     <!-- Landing Page -->
     <section id="landing-page" class="landing-section" style="display: none;">
-        <!-- Navbar -->
+        <!-- Floating Navbar -->
         <nav class="landing-navbar">
             <div class="navbar-logo">
-                <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                     <rect width="32" height="32" rx="8" fill="url(#logo-gradient)"/>
                     <path d="M8 20L12 16L16 18L24 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <defs>
@@ -51,7 +54,7 @@
             <div class="navbar-actions">
                 <button class="nav-btn-primary" id="enter-app-btn">Open Journal</button>
                 <button class="nav-btn-menu">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="12" x2="21" y2="12"/>
                         <line x1="3" y1="6" x2="21" y2="6"/>
                         <line x1="3" y1="18" x2="21" y2="18"/>
@@ -62,7 +65,7 @@
 
         <!-- Hero Section -->
         <div class="hero-container">
-            <div class="hero-content">
+            <div class="hero-content reveal">
                 <div class="landing-badge">Professional Trading Tool</div>
                 <h1 class="landing-title">Master Your<br>Trading Edge</h1>
                 <p class="landing-desc">Transform your trading with a professional journal designed for serious traders. Track performance, analyze psychology, and improve consistently.</p>
@@ -71,7 +74,7 @@
                     <button class="btn btn-secondary btn-large" id="view-features-btn">View Features</button>
                 </div>
             </div>
-            <div class="landing-visual">
+            <div class="landing-visual reveal reveal-delay">
                 <div class="scrolling-grid">
                     <div class="grid-column col-1">
                         <div class="scroll-card"><img src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80" alt="Chart"></div>
@@ -96,43 +99,43 @@
         <!-- Features Section -->
         <section id="features-section" class="features-section">
             <div class="features-container">
-                <h2 class="features-title">Everything You Need to Trade Better</h2>
-                <p class="features-subtitle">Powerful tools designed for serious traders who want to improve consistently.</p>
+                <h2 class="features-title reveal">Everything You Need to Trade Better</h2>
+                <p class="features-subtitle reveal">Powerful tools designed for serious traders who want to improve consistently.</p>
                 
                 <div class="features-grid">
-                    <div class="feature-card">
+                    <div class="feature-card reveal">
                         <div class="feature-icon">📊</div>
                         <h3>Performance Dashboard</h3>
                         <p>Track your win rate, profit factor, and equity curve with beautiful real-time charts.</p>
                     </div>
-                    <div class="feature-card">
+                    <div class="feature-card reveal">
                         <div class="feature-icon">📝</div>
                         <h3>Trade Journal</h3>
                         <p>Log every trade with entry/exit details, screenshots, notes, and psychology tracking.</p>
                     </div>
-                    <div class="feature-card">
-                        <div class="feature-icon"></div>
+                    <div class="feature-card reveal">
+                        <div class="feature-icon">🎯</div>
                         <h3>Strategy Tracking</h3>
                         <p>Compare different strategies and discover which setups actually make you money.</p>
                     </div>
-                    <div class="feature-card">
+                    <div class="feature-card reveal">
                         <div class="feature-icon">🧠</div>
                         <h3>Psychology Insights</h3>
                         <p>Track emotions and discipline to identify patterns in your best and worst trades.</p>
                     </div>
-                    <div class="feature-card">
+                    <div class="feature-card reveal">
                         <div class="feature-icon">🧮</div>
                         <h3>Risk Calculators</h3>
                         <p>Position size and risk/reward calculators to ensure proper risk management.</p>
                     </div>
-                    <div class="feature-card">
+                    <div class="feature-card reveal">
                         <div class="feature-icon">🎯</div>
                         <h3>Goal Setting</h3>
                         <p>Set trading goals and track your progress visually to stay motivated and disciplined.</p>
                     </div>
                 </div>
 
-                <div class="features-cta">
+                <div class="features-cta reveal">
                     <button class="btn btn-primary btn-large enter-btn">Start Trading Journal</button>
                 </div>
             </div>
@@ -394,15 +397,17 @@
             const viewFeaturesBtn = document.getElementById('view-features-btn');
 
             setTimeout(() => {
-                loadingScreen.style.opacity = '0';
+                loadingScreen.classList.add('fade-out');
                 setTimeout(() => {
                     loadingScreen.style.display = 'none';
                     landingPage.style.display = 'block';
-                    setTimeout(() => landingPage.classList.add('visible'), 50);
-                }, 500);
-            }, 1500);
+                    setTimeout(() => {
+                        landingPage.classList.add('visible');
+                        initScrollReveal();
+                    }, 50);
+                }, 600);
+            }, 2000);
 
-            // Open Journal buttons
             enterBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     landingPage.style.opacity = '0';
@@ -418,7 +423,6 @@
                 });
             });
 
-            // View Features button - smooth scroll to features section
             if (viewFeaturesBtn) {
                 viewFeaturesBtn.addEventListener('click', () => {
                     const featuresSection = document.getElementById('features-section');
@@ -428,6 +432,23 @@
                 });
             }
         });
+
+        // Scroll Reveal Animation
+        function initScrollReveal() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        }
     </script>
 </body>
 </html>
