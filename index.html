@@ -83,7 +83,6 @@
                         <div class="scroll-card"><img src="Images/photo3.jpg" alt="Trade Setup"></div>
                         <div class="scroll-card"><img src="Images/photo4.jpg" alt="Trade Setup"></div>
                         <div class="scroll-card"><img src="Images/photo5.jpg" alt="Trade Setup"></div>
-                        <!-- Duplicates for seamless loop -->
                         <div class="scroll-card"><img src="Images/photo1.jpg" alt="Trade Setup"></div>
                         <div class="scroll-card"><img src="Images/photo2.jpg" alt="Trade Setup"></div>
                         <div class="scroll-card"><img src="Images/photo3.jpg" alt="Trade Setup"></div>
@@ -97,7 +96,6 @@
                         <div class="scroll-card"><img src="Images/photo7.jpg" alt="Trade Setup"></div>
                         <div class="scroll-card"><img src="Images/photo8.jpg" alt="Trade Setup"></div>
                         <div class="scroll-card"><img src="Images/photo9.jpg" alt="Trade Setup"></div>
-                        <!-- Duplicates for seamless loop -->
                         <div class="scroll-card"><img src="Images/photo6.jpg" alt="Trade Setup"></div>
                         <div class="scroll-card"><img src="Images/photo7.jpg" alt="Trade Setup"></div>
                         <div class="scroll-card"><img src="Images/photo8.jpg" alt="Trade Setup"></div>
@@ -107,9 +105,11 @@
             </div>
         </div>
 
-        <!-- CINEMATIC GIF DIVIDER -->
+        <!-- CINEMATIC VIDEO DIVIDER -->
         <div class="cinematic-divider reveal">
-            <img src="Images/scene.gif" alt="Visual Element">
+            <video autoplay muted loop playsinline>
+                <source src="Images/scene.mp4" type="video/mp4">
+            </video>
             <div class="divider-fade-top"></div>
             <div class="divider-fade-bottom"></div>
         </div>
@@ -122,7 +122,7 @@
                 
                 <div class="features-grid">
                     <div class="feature-card reveal">
-                        <div class="feature-icon"></div>
+                        <div class="feature-icon">📊</div>
                         <h3>Performance Dashboard</h3>
                         <p>Track your win rate, profit factor, and equity curve with beautiful real-time charts.</p>
                     </div>
@@ -132,7 +132,7 @@
                         <p>Log every trade with entry/exit details, screenshots, notes, and psychology tracking.</p>
                     </div>
                     <div class="feature-card reveal">
-                        <div class="feature-icon"></div>
+                        <div class="feature-icon">🎯</div>
                         <h3>Strategy Tracking</h3>
                         <p>Compare different strategies and discover which setups actually make you money.</p>
                     </div>
@@ -407,7 +407,6 @@
     <script src="js/app.js"></script>
     
     <script>
-        // Navigation & Loading Screen Logic
         window.addEventListener('load', () => {
             const loadingScreen = document.getElementById('loading-screen');
             const landingPage = document.getElementById('landing-page');
