@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EdgeJournal - Professional Trading Journal</title>
+    <title>TradeVault - Professional Trading Journal</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366f1'/%3E%3Cpath d='M8 20L12 16L16 18L24 10' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/trades.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Loading Screen -->
@@ -26,7 +27,7 @@
                     </linearGradient>
                 </defs>
             </svg>
-            <div class="loader-text">EdgeJournal</div>
+            <div class="loader-text">TradeVault</div>
         </div>
     </div>
 
@@ -73,7 +74,7 @@
                         </linearGradient>
                     </defs>
                 </svg>
-                <span class="logo-text">EdgeJournal</span>
+                <span class="logo-text">TradeVault</span>
             </div>
         </div>
         
@@ -278,7 +279,7 @@
                 <div class="settings-card">
                     <h3>About</h3>
                     <div class="about-info">
-                        <p><strong>EdgeJournal</strong> v1.0.0</p>
+                        <p><strong>TradeVault</strong> v1.0.0</p>
                         <p>Professional Trading Journal</p>
                         <p>All data is stored locally in your browser</p>
                     </div>
@@ -312,18 +313,15 @@
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
             const enterBtn = document.getElementById('enter-app-btn');
 
-            // Show loading screen for 1.5 seconds, then show landing page
             setTimeout(() => {
                 loadingScreen.style.opacity = '0';
                 setTimeout(() => {
                     loadingScreen.style.display = 'none';
                     landingPage.style.display = 'block';
-                    // Trigger animation
                     setTimeout(() => landingPage.classList.add('visible'), 50);
                 }, 500);
             }, 1500);
 
-            // When "Open Journal" is clicked, hide landing page and show app
             enterBtn.addEventListener('click', () => {
                 landingPage.style.opacity = '0';
                 setTimeout(() => {
@@ -331,7 +329,6 @@
                     mainApp.style.display = 'block';
                     sidebar.style.display = 'flex';
                     mobileMenuToggle.style.display = 'block';
-                    // Initialize the app now that it's visible
                     if (typeof app !== 'undefined') {
                         app.init();
                     }
