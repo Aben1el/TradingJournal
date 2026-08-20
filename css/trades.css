@@ -1,6 +1,5 @@
 /* =========================================
-   JOURNAL & TRADES PAGE - PREMIUM REDESIGN
-   Matches Landing Page Aesthetic
+   JOURNAL & TRADES — PREMIUM DESIGN
    ========================================= */
 
 /* Journal Grid */
@@ -124,7 +123,7 @@
     font-weight: 500; 
 }
 
-/* Add Trade Button - Premium Pill Style */
+/* Add Trade Button */
 #addTradeBtn {
     padding: 0.875rem 1.75rem;
     border-radius: 100px;
@@ -139,7 +138,7 @@
     transform: translateY(-2px);
 }
 
-/* Trades Table Container - Glassmorphic */
+/* Trades Table */
 .table-container { 
     background: rgba(22, 22, 24, 0.6);
     backdrop-filter: blur(16px);
@@ -185,7 +184,7 @@
 .table-action-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
 .table-action-btn.delete:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
 
-/* Filters & Search - Premium Inputs */
+/* Filters & Search */
 .search-input {
     padding: 0.75rem 1.25rem; 
     background: rgba(22, 22, 24, 0.6); 
@@ -227,7 +226,7 @@
     align-items: center; 
 }
 
-/* Strategies & Goals Grid - Matching Journal Cards */
+/* Strategies & Goals Grids */
 .strategies-grid, .goals-grid { 
     display: grid; 
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
@@ -408,13 +407,43 @@
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
 
-/* Responsive */
+/* =========================================
+   MOBILE — JOURNAL OPTIMIZED FOR PHONES
+   ========================================= */
 @media (max-width: 768px) {
-    .journal-grid, .strategies-grid, .goals-grid { grid-template-columns: 1fr; }
+    .journal-grid, .strategies-grid, .goals-grid { grid-template-columns: 1fr; gap: 1rem; }
+
+    /* Compact, readable trade cards */
+    .trade-card { padding: 1.25rem; border-radius: 16px; }
+    .trade-card-header { margin-bottom: 1.25rem; }
+    .trade-symbol { font-size: 1.25rem; }
+    .trade-card-body { grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+    .trade-info-value { font-size: 0.9375rem; }
+    .trade-card-footer { padding-top: 1rem; }
+    .trade-pl { font-size: 1.125rem; }
+
+    /* Full-width Add Trade button */
+    #addTradeBtn { width: 100%; justify-content: center; }
+
+    /* Table scrolls horizontally with tighter cells */
     .table-container { overflow-x: auto; }
-    .trades-table { min-width: 800px; }
-    .trade-card-body { grid-template-columns: 1fr; }
-    .calculators-grid, .psychology-grid { grid-template-columns: 1fr; }
+    .trades-table { min-width: 700px; }
+    .trades-table th, .trades-table td { padding: 0.875rem 0.75rem; }
+
+    /* Filters stack cleanly */
     .filters-bar { flex-direction: column; align-items: stretch; }
     .search-input, .filter-select { width: 100%; min-width: auto; }
+
+    .calculators-grid, .psychology-grid { grid-template-columns: 1fr; }
+    .insights-container, .emotion-stats, .calculator-card, .settings-card { padding: 1.25rem; border-radius: 16px; }
+    .strategy-card, .goal-card { padding: 1.25rem; border-radius: 16px; }
+
+    .trade-detail-grid { grid-template-columns: 1fr 1fr; gap: 0.875rem; }
+    .trade-detail-section { padding: 1.25rem; }
+}
+
+@media (max-width: 400px) {
+    .trade-card-body { gap: 0.75rem; }
+    .trade-info-label { font-size: 0.6875rem; }
+    .trade-detail-grid { grid-template-columns: 1fr; }
 }
