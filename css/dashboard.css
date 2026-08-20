@@ -177,3 +177,25 @@
     .chart-container { height: 280px; padding: 1.25rem; }
     .chart-container.tall { height: 320px; }
 }
+/* =========================================
+   MOBILE LAYOUT FIX — NO MORE OVERLAP
+   ========================================= */
+.chart-container { height: auto; }
+.chart-container.tall { height: auto; }
+.chart-container canvas { width: 100%; height: 260px; flex: 0 0 auto; }
+.chart-container.tall canvas { height: 320px; }
+.dash-two-col .chart-container { min-height: 0; }
+@media (max-width: 560px) {
+    .chart-container canvas { height: 220px; }
+    .chart-container.tall canvas { height: 260px; }
+    .monthly-grid { grid-template-columns: 1fr 1fr; }
+    .dash-header h1 { font-size: 1.6rem; }
+    .dash-subtitle { font-size: 0.8125rem; }
+    .today-grid { gap: 0.875rem; }
+    .today-value { font-size: 1.25rem; }
+    .today-card { padding: 1rem 1.125rem; }
+    .stat-card { padding: 1rem; }
+    .stat-value { font-size: 1.125rem; }
+    .recent-meta { max-width: 170px; }
+    .month-label { min-width: 110px; font-size: 0.8125rem; }
+}
