@@ -447,3 +447,17 @@
     .trade-info-label { font-size: 0.6875rem; }
     .trade-detail-grid { grid-template-columns: 1fr; }
 }
+/* =========================================
+   MOBILE TAP TARGETS & INPUT FIX
+   ========================================= */
+@media (max-width: 768px) {
+    .table-action-btn {
+        width: 40px; height: 40px; padding: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+    }
+    .search-input, .filter-select, .form-control { font-size: 1rem; }
+    .search-input, .filter-select { padding: 0.875rem 1.25rem; }
+    .btn { min-height: 44px; }
+    .pagination-btn { min-height: 40px; }
+    .filter-btn { min-height: 38px; }
+}
