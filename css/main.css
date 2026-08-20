@@ -457,3 +457,10 @@ body {
     .scroll-card { height: 220px; }
     .landing-visual { height: 480px; }
 }
+/* =========================================
+   FASTER SCROLLING ON MOBILE
+   ========================================= */
+@media (max-width: 900px) {
+    .grid-column { animation-duration: 25s; }
+    .col-2 { animation-duration: 25s; }
+}
