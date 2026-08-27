@@ -524,6 +524,7 @@ body {
     animation: logoFloat 2s ease-in-out infinite;
 }
 #loading-screen .loader-ring { width: 130px; height: 130px; }
+
 /* =========================================
    LOGO & LOADING — FINAL SIZES (v3)
    ========================================= */
