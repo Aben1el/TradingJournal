@@ -342,4 +342,89 @@ class Trades {
                 } catch (e) {
                     showToast('Error saving trade', 'error');
                 }
-           
+            };
+
+            if (fileInput && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    data.screenshot = e.target.result;
+                    saveToDatabase(data);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                if (trade && trade.screenshot) data.screenshot = trade.screenshot;
+                saveToDatabase(data);
+            }
+        };
+    }
+
+    async deleteTrade(id) {
+        if (await confirmDialog('Are you sure you want to delete this trade?')) {
+            await db.deleteTrade(id);
+            showToast('Trade deleted');
+            this.loadTrades();
+            dashboard.loadDashboard();
+        }
+    }
+
+    async showTradeDetail(id) {
+        const trade = await db.getTrade(id);
+        if (!trade) return;
+
+        const overlay = document.getElementById('modalOverlay');
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-header">
+                <h2>${trade.symbol} - ${trade.direction.toUpperCase()}</h2>
+                <button class="modal-close" onclick="app.closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="trade-detail">
+                    <div class="trade-detail-section">
+                        <h4>Trade Info</h4>
+                        <div class="trade-detail-grid">
+                            <div><strong>Entry:</strong> ${formatNumber(trade.entryPrice, 5)}</div>
+                            <div><strong>Exit:</strong> ${formatNumber(trade.exitPrice, 5)}</div>
+                            <div><strong>Stop Loss:</strong> ${trade.stopLoss ? formatNumber(trade.stopLoss, 5) : 'N/A'}</div>
+                            <div><strong>Size:</strong> ${trade.positionSize || 'N/A'}</div>
+                            <div><strong>Date:</strong> ${formatDate(trade.entryDate)}</div>
+                            <div><strong>Strategy:</strong> ${trade.strategy || 'N/A'}</div>
+                        </div>
+                    </div>
+                    <div class="trade-detail-section">
+                        <h4>Results</h4>
+                        <div class="trade-detail-grid">
+                            <div><strong>P/L:</strong> <span class="${trade.profitLoss >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(trade.profitLoss)}</span></div>
+                            <div><strong>R Multiple:</strong> ${formatNumber(trade.rMultiple, 2)}R</div>
+                        </div>
+                    </div>
+                    <div class="trade-detail-section">
+                        <h4>Psychology</h4>
+                        <div class="trade-detail-grid">
+                            <div><strong>Emotion:</strong> ${trade.emotionBefore || 'N/A'}</div>
+                            <div><strong>Discipline:</strong> ${trade.discipline || 'N/A'}/10</div>
+                            <div><strong>Confidence:</strong> ${trade.confidence || 'N/A'}/10</div>
+                        </div>
+                    </div>
+                    ${trade.notes ? `<div class="trade-detail-section"><h4>Notes</h4><p>${trade.notes}</p></div>` : ''}
+                    ${trade.screenshot ? `
+                    <div class="trade-detail-section">
+                        <h4>Chart Screenshot</h4>
+                        <div class="trade-screenshot-container">
+                            <img src="${trade.screenshot}" alt="Trade Chart">
+                        </div>
+                    </div>` : ''}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="app.closeModal()">Close</button>
+                <button class="btn btn-primary" onclick="app.closeModal(); trades.showTradeModal(${trade.id})">Edit Trade</button>
+            </div>
+        `;
+        overlay.appendChild(modal);
+        overlay.classList.add('active');
+    }
+}
+
+const trades = new Trades();
