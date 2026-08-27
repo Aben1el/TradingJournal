@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TradeVault - Professional Trading Journal</title>
-    <link rel="icon" type="image/png" href="Images/logo.png?v=2">
-    <link rel="apple-touch-icon" href="Images/logo.png?v=2">
+    <link rel="icon" type="image/png" href="Images/logo.png?v=3">
+    <link rel="apple-touch-icon" href="Images/logo.png?v=3">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/dashboard.css">
@@ -13,6 +13,52 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- ============================================================
+         BULLETPROOF OVERRIDES — these win over every CSS file
+         ============================================================ -->
+    <style>
+        /* BIG loading-screen logo */
+        #loading-screen { transition: opacity 0.4s ease; }
+        #loading-screen .loader-logo-img {
+            width: 150px !important;
+            height: 150px !important;
+            border-radius: 50% !important;
+            object-fit: cover !important;
+        }
+        #loading-screen .loader-ring { width: 195px !important; height: 195px !important; }
+        #loading-screen .loader-ring::before { top: -8px !important; left: -8px !important; right: -8px !important; bottom: -8px !important; }
+        #loading-screen .loader-text { font-size: 1.25rem !important; letter-spacing: 0.2em !important; }
+
+        /* BIG navbar + sidebar logos */
+        .navbar-logo .logo-img { width: 34px !important; height: 34px !important; border-radius: 50% !important; object-fit: cover !important; }
+        .sidebar .logo-img { width: 42px !important; height: 42px !important; border-radius: 50% !important; object-fit: cover !important; }
+
+        /* No-overlap dashboard on phones */
+        .chart-container { height: auto !important; }
+        .chart-container canvas { width: 100% !important; height: 260px !important; flex: 0 0 auto !important; }
+        .chart-container.tall canvas { height: 320px !important; }
+        .dash-two-col .chart-container { min-height: 0 !important; }
+
+        /* Faster image scroll on phones */
+        @media (max-width: 900px) {
+            .grid-column, .col-2 { animation-duration: 25s !important; }
+        }
+
+        /* Mobile sizing */
+        @media (max-width: 560px) {
+            .chart-container canvas { height: 220px !important; }
+            .chart-container.tall canvas { height: 260px !important; }
+            .monthly-grid { grid-template-columns: 1fr 1fr !important; }
+            .today-value { font-size: 1.25rem !important; }
+            .today-card { padding: 1rem 1.125rem !important; }
+        }
+        @media (max-width: 768px) {
+            .table-action-btn { width: 40px !important; height: 40px !important; padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; }
+            .search-input, .filter-select, .form-control { font-size: 1rem !important; }
+            .btn { min-height: 44px !important; }
+        }
+    </style>
 </head>
 <body>
     <!-- Loading Screen -->
@@ -28,7 +74,6 @@
 
     <!-- Landing Page -->
     <section id="landing-page" class="landing-section" style="display: none;">
-        <!-- Animated light rays from top-left -->
         <div class="ambient-rays"></div>
 
         <nav class="landing-navbar">
@@ -48,7 +93,6 @@
             </div>
         </nav>
 
-        <!-- Dropdown menu (opened by the ☰ button) -->
         <div class="navbar-menu-dropdown" id="navbarDropdown">
             <button class="dropdown-item" id="dropFeatures">View Features</button>
             <button class="dropdown-item" id="dropJournal">Open Journal</button>
@@ -411,7 +455,7 @@
                 <div class="settings-card">
                     <h3>About</h3>
                     <div class="about-info">
-                        <p><strong>TradeVault</strong> v2.3.0</p>
+                        <p><strong>TradeVault</strong> v2.4.0</p>
                         <p>Professional Trading Journal</p>
                         <p>All data is stored locally in your browser</p>
                     </div>
