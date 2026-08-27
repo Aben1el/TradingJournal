@@ -501,3 +501,26 @@ body {
     .scroll-card { height: 220px; }
     .landing-visual { height: 480px; }
 }
+/* =========================================
+   BRAND LOGO IMAGE
+   ========================================= */
+.logo-img {
+    border-radius: 50%;
+    object-fit: cover;
+    background: #0a0a0a;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.logo-sm { width: 28px; height: 28px; }
+.logo-md { width: 36px; height: 36px; }
+
+.loader-logo-img {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    position: relative;
+    z-index: 2;
+    animation: logoFloat 2s ease-in-out infinite;
+}
+#loading-screen .loader-ring { width: 130px; height: 130px; }
