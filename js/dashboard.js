@@ -1,4 +1,12 @@
-// Dashboard Module
+// Dashboard Module — professional chart system
+
+const CHART_COLORS = {
+    green: '#2ebd85',
+    red: '#e5536b',
+    gray: '#5b5b66',
+    accent: '#7c7ff2',
+    indigo: ['#7c7ff2', '#9aa0f5', '#6f74e8', '#8b5cf6', '#a78bfa', '#5f64d6']
+};
 
 class Dashboard {
     constructor() {
@@ -6,6 +14,13 @@ class Dashboard {
         this.charts = {};
         this.analyticsCharts = {};
         this.viewMonth = getMonthKey(new Date());
+
+        // Global chart typography
+        Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+        Chart.defaults.color = '#8a8a93';
+        Chart.defaults.animation.duration = 800;
+        Chart.defaults.animation.easing = 'easeOutQuart';
+
         this._bindMonthNav();
     }
 
@@ -14,9 +29,53 @@ class Dashboard {
     _bindMonthNav() {
         const prev = document.getElementById('prevMonthBtn');
         const next = document.getElementById('nextMonthBtn');
-        if (prev) prev.addEventListener('click', () => { this.viewMonth = shiftMonthKey(this.viewMonth, -1); this._refreshMonthly(); });
-        if (next) next.addEventListener('click', () => { this.viewMonth = shiftMonthKey(this.viewMonth, 1); this._refreshMonthly(); });
+        if (prev) prev.onclick = () => { this.viewMonth = shiftMonthKey(this.viewMonth, -1); this._refreshMonthly(); };
+        if (next) next.onclick = () => { this.viewMonth = shiftMonthKey(this.viewMonth, 1); this._refreshMonthly(); };
     }
+
+    // ---- shared chart styling helpers ----
+    _tooltip(money = true) {
+        return {
+            backgroundColor: 'rgba(18, 18, 22, 0.95)',
+            titleColor: '#ffffff',
+            bodyColor: '#c9c9d1',
+            borderColor: 'rgba(255, 255, 255, 0.08)',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 10,
+            displayColors: false,
+            titleFont: { size: 12, weight: '600' },
+            bodyFont: { size: 12 },
+            callbacks: money ? { label: c => ' ' + formatCurrency(c.parsed.y !== undefined ? c.parsed.y : c.parsed.x) } : {}
+        };
+    }
+
+    _axes(money = true, maxTicks = 6) {
+        return {
+            x: {
+                grid: { display: false },
+                border: { display: false },
+                ticks: { color: '#8a8a93', font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }
+            },
+            y: {
+                grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                border: { display: false },
+                ticks: {
+                    color: '#8a8a93', font: { size: 10 }, maxTicksLimit: maxTicks,
+                    callback: money ? (v => '$' + v) : undefined
+                }
+            }
+        };
+    }
+
+    _legend() {
+        return {
+            position: 'bottom',
+            labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, boxHeight: 6, padding: 16, color: '#a0a0a0', font: { size: 11 } }
+        };
+    }
+
+    _signColors(values) { return values.map(v => v >= 0 ? CHART_COLORS.green : CHART_COLORS.red); }
 
     async loadDashboard() {
         const trades = await db.getAllTrades();
@@ -91,10 +150,7 @@ class Dashboard {
             <div class="stat-card"><div class="stat-label">Max Drawdown</div><div class="stat-value text-danger">${formatCurrency(s.maxDrawdown)}</div></div>`;
     }
 
-    renderMonthly(trades) {
-        this._trades = trades;
-        this._refreshMonthly();
-    }
+    renderMonthly(trades) { this._trades = trades; this._refreshMonthly(); }
 
     _refreshMonthly() {
         const label = document.getElementById('monthLabel');
@@ -148,14 +204,10 @@ class Dashboard {
     renderInsights(trades) {
         const el = document.getElementById('smartInsights');
         if (!el) return;
-        const insights = analytics.getSmartInsights(trades);
-        el.innerHTML = insights.map(i => `<div class="smart-insight ${i.type}">${i.text}</div>`).join('');
+        el.innerHTML = analytics.getSmartInsights(trades).map(i => `<div class="smart-insight ${i.type}">${i.text}</div>`).join('');
     }
 
-    _tooltip() {
-        return { backgroundColor: 'rgba(26,26,26,0.95)', titleColor: '#fff', bodyColor: '#fff', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 12 };
-    }
-
+    // ================= DASHBOARD CHARTS =================
     renderCharts(trades) {
         Object.values(this.charts).forEach(c => c && c.destroy());
         this.charts = {};
@@ -166,46 +218,77 @@ class Dashboard {
         if (eq) {
             const ctx = eq.getContext('2d');
             const { labels, data } = analytics.getEquityCurveData(trades);
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(99,102,241,0.3)');
-            gradient.addColorStop(1, 'rgba(99,102,241,0)');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 380);
+            gradient.addColorStop(0, 'rgba(124, 127, 242, 0.25)');
+            gradient.addColorStop(1, 'rgba(124, 127, 242, 0)');
             this.charts.equity = new Chart(ctx, {
                 type: 'line',
-                data: { labels, datasets: [{ data, borderColor: '#6366f1', backgroundColor: gradient, borderWidth: 2, fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 6 }] },
-                options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: false }, tooltip: { ...this._tooltip(), callbacks: { label: c => formatCurrency(c.parsed.y) } } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0a0', maxTicksLimit: 8 } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0a0', callback: v => '$' + v } } } }
+                data: { labels, datasets: [{ data, borderColor: CHART_COLORS.accent, backgroundColor: gradient, borderWidth: 2, fill: true, tension: 0.35, pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: CHART_COLORS.accent, pointHoverBorderColor: '#fff' }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: { legend: { display: false }, tooltip: this._tooltip() },
+                    scales: this._axes()
+                }
             });
         }
 
-        // Win/Loss
+        // Win/Loss doughnut
         const wl = document.getElementById('winLossChart');
         if (wl) {
             const d = analytics.getWinLossDistribution(trades);
-            this.charts.wl = new Chart(wl.getContext('2d'), { type: 'doughnut', data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.colors, borderColor: '#1a1a1a', borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#a0a0a0', usePointStyle: true } }, tooltip: this._tooltip() } } });
+            this.charts.wl = new Chart(wl.getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: [CHART_COLORS.green, CHART_COLORS.red, CHART_COLORS.gray], borderColor: '#141417', borderWidth: 3, hoverOffset: 8, spacing: 2 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '72%',
+                    plugins: { legend: this._legend(), tooltip: { ...this._tooltip(false), callbacks: { label: c => ` ${c.label}: ${c.parsed} trades` } } }
+                }
+            });
         }
 
-        // Strategy
+        // Strategy performance
         const st = document.getElementById('strategyChart');
         if (st) {
             const d = analytics.getPerformanceByStrategy(trades);
-            this.charts.st = new Chart(st.getContext('2d'), { type: 'bar', data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.colors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { ...this._tooltip(), callbacks: { label: c => formatCurrency(c.parsed.y) } } }, scales: { x: { grid: { display: false }, ticks: { color: '#a0a0a0' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0a0', callback: v => '$' + v } } } } });
+            this.charts.st = new Chart(st.getContext('2d'), {
+                type: 'bar',
+                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.data.map((_, i) => CHART_COLORS.indigo[i % CHART_COLORS.indigo.length]), borderRadius: 6, maxBarThickness: 42 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: this._tooltip() }, scales: this._axes() }
+            });
         }
 
         // Day of week
         const dw = document.getElementById('dayOfWeekChart');
         if (dw) {
             const d = analytics.getProfitByDayOfWeek(trades);
-            this.charts.dw = new Chart(dw.getContext('2d'), { type: 'bar', data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.colors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { ...this._tooltip(), callbacks: { label: c => formatCurrency(c.parsed.y) } } }, scales: { x: { grid: { display: false }, ticks: { color: '#a0a0a0' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0a0', callback: v => '$' + v } } } } });
+            this.charts.dw = new Chart(dw.getContext('2d'), {
+                type: 'bar',
+                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: this._signColors(d.data), borderRadius: 6, maxBarThickness: 32 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: this._tooltip() }, scales: this._axes() }
+            });
         }
 
         // Long vs Short
         const ls = document.getElementById('longShortChart');
         if (ls) {
             const d = analytics.getLongVsShortPerformance(trades);
-            this.charts.ls = new Chart(ls.getContext('2d'), { type: 'bar', data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.colors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { ...this._tooltip(), callbacks: { label: c => formatCurrency(c.parsed.x) } } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0a0', callback: v => '$' + v } }, y: { grid: { display: false }, ticks: { color: '#a0a0a0' } } } } });
+            this.charts.ls = new Chart(ls.getContext('2d'), {
+                type: 'bar',
+                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: this._signColors(d.data), borderRadius: 6, maxBarThickness: 36 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    plugins: { legend: { display: false }, tooltip: { ...this._tooltip(), callbacks: { label: c => ' ' + formatCurrency(c.parsed.x) } } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }, ticks: { color: '#8a8a93', font: { size: 10 }, callback: v => '$' + v } },
+                        y: { grid: { display: false }, border: { display: false }, ticks: { color: '#8a8a93', font: { size: 11 } } }
+                    }
+                }
+            });
         }
     }
 
-    // Analytics page charts (previously dead canvases — now live)
+    // ================= ANALYTICS PAGE CHARTS =================
     async loadAnalytics() {
         const trades = await db.getAllTrades();
         Object.values(this.analyticsCharts).forEach(c => c && c.destroy());
@@ -215,25 +298,41 @@ class Dashboard {
         const mo = document.getElementById('monthlyChart');
         if (mo) {
             const d = analytics.getMonthlyPerformance(trades);
-            this.analyticsCharts.mo = new Chart(mo.getContext('2d'), { type: 'bar', data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.colors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { ...this._tooltip(), callbacks: { label: c => formatCurrency(c.parsed.y) } } }, scales: { x: { grid: { display: false }, ticks: { color: '#a0a0a0' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0a0', callback: v => '$' + v } } } } });
+            this.analyticsCharts.mo = new Chart(mo.getContext('2d'), {
+                type: 'bar',
+                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: this._signColors(d.data), borderRadius: 6, maxBarThickness: 46 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: this._tooltip() }, scales: this._axes() }
+            });
         }
 
         const dp = document.getElementById('dailyPLChart');
         if (dp) {
             const d = analytics.getDailyPL(trades);
-            this.analyticsCharts.dp = new Chart(dp.getContext('2d'), { type: 'bar', data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.colors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { ...this._tooltip(), callbacks: { label: c => formatCurrency(c.parsed.y) } } }, scales: { x: { grid: { display: false }, ticks: { color: '#a0a0a0', maxTicksLimit: 10 } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0a0', callback: v => '$' + v } } } } });
+            this.analyticsCharts.dp = new Chart(dp.getContext('2d'), {
+                type: 'bar',
+                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: this._signColors(d.data), borderRadius: 5, maxBarThickness: 26 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: this._tooltip() }, scales: this._axes(true, 5) }
+            });
         }
 
         const se = document.getElementById('sessionChart');
         if (se) {
             const d = analytics.getPerformanceBySession(trades);
-            this.analyticsCharts.se = new Chart(se.getContext('2d'), { type: 'bar', data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.colors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { ...this._tooltip(), callbacks: { label: c => formatCurrency(c.parsed.y) } } }, scales: { x: { grid: { display: false }, ticks: { color: '#a0a0a0' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0a0', callback: v => '$' + v } } } } });
+            this.analyticsCharts.se = new Chart(se.getContext('2d'), {
+                type: 'bar',
+                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.data.map((_, i) => CHART_COLORS.indigo[i % CHART_COLORS.indigo.length]), borderRadius: 6, maxBarThickness: 42 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: this._tooltip() }, scales: this._axes() }
+            });
         }
 
         const rr = document.getElementById('rrDistributionChart');
         if (rr) {
             const d = analytics.getRRDistribution(trades);
-            this.analyticsCharts.rr = new Chart(rr.getContext('2d'), { type: 'bar', data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.colors, borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: this._tooltip() }, scales: { x: { grid: { display: false }, ticks: { color: '#a0a0a0' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0a0', precision: 0 } } } } });
+            this.analyticsCharts.rr = new Chart(rr.getContext('2d'), {
+                type: 'bar',
+                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: CHART_COLORS.accent, borderRadius: 5, maxBarThickness: 34 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { ...this._tooltip(false), callbacks: { label: c => ` ${c.parsed.y} trades` } } }, scales: this._axes(false, 5) }
+            });
         }
     }
 }
