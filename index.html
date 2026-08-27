@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TradeVault - Professional Trading Journal</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366f1'/%3E%3Cpath d='M8 20L12 16L16 18L24 10' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/png" href="Images/logo.png">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/dashboard.css">
@@ -18,16 +18,7 @@
     <div id="loading-screen">
         <div class="loader-content">
             <div class="loader-logo-wrapper">
-                <svg class="loader-logo" width="56" height="56" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="8" fill="#0a0a0a" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
-                    <path d="M8 20L12 16L16 18L24 10" stroke="url(#logo-gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <defs>
-                        <linearGradient id="logo-gradient" x1="0" y1="0" x2="32" y2="32">
-                            <stop stop-color="#6366f1"/>
-                            <stop offset="1" stop-color="#8b5cf6"/>
-                        </linearGradient>
-                    </defs>
-                </svg>
+                <img src="Images/logo.png" alt="TradeVault" class="loader-logo-img">
                 <div class="loader-ring"></div>
             </div>
             <div class="loader-text">TradeVault</div>
@@ -41,16 +32,7 @@
 
         <nav class="landing-navbar">
             <div class="navbar-logo">
-                <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="8" fill="url(#logo-gradient)"/>
-                    <path d="M8 20L12 16L16 18L24 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <defs>
-                        <linearGradient id="logo-gradient" x1="0" y1="0" x2="32" y2="32">
-                            <stop stop-color="#6366f1"/>
-                            <stop offset="1" stop-color="#8b5cf6"/>
-                        </linearGradient>
-                    </defs>
-                </svg>
+                <img src="Images/logo.png" alt="TradeVault" class="logo-img logo-sm">
                 <span>TradeVault</span>
             </div>
             <div class="navbar-actions">
@@ -142,16 +124,7 @@
     <aside class="sidebar" id="sidebar" style="display: none;">
         <div class="sidebar-header">
             <div class="logo">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="8" fill="url(#logo-gradient)"/>
-                    <path d="M8 20L12 16L16 18L24 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <defs>
-                        <linearGradient id="logo-gradient" x1="0" y1="0" x2="32" y2="32">
-                            <stop stop-color="#6366f1"/>
-                            <stop offset="1" stop-color="#8b5cf6"/>
-                        </linearGradient>
-                    </defs>
-                </svg>
+                <img src="Images/logo.png" alt="TradeVault" class="logo-img logo-md">
                 <span class="logo-text">TradeVault</span>
             </div>
         </div>
@@ -437,7 +410,7 @@
                 <div class="settings-card">
                     <h3>About</h3>
                     <div class="about-info">
-                        <p><strong>TradeVault</strong> v2.1.0</p>
+                        <p><strong>TradeVault</strong> v2.2.0</p>
                         <p>Professional Trading Journal</p>
                         <p>All data is stored locally in your browser</p>
                     </div>
@@ -538,7 +511,6 @@
 
             if (viewFeaturesBtn) viewFeaturesBtn.addEventListener('click', scrollToFeatures);
 
-            // --- NEW: functional navbar logo + menu button ---
             const navbarLogo = document.querySelector('.navbar-logo');
             const menuBtn = document.querySelector('.nav-btn-menu');
             const dropdown = document.getElementById('navbarDropdown');
