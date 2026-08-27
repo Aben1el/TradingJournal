@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TradeVault - Professional Trading Journal</title>
-    <link rel="icon" type="image/svg+xml" href="Images/favicon.svg?v=2">
+    <link rel="icon" type="image/svg+xml" href="Images/favicon.svg?v=4">
     <link rel="icon" type="image/png" href="Images/logo.png?v=3">
     <link rel="apple-touch-icon" href="Images/logo.png?v=3">
     <link rel="stylesheet" href="css/main.css">
@@ -17,25 +17,37 @@
 
     <!-- BULLETPROOF OVERRIDES -->
     <style>
-        /* Transparent logos — no background circle, comfortable size */
-        .navbar-logo .logo-img {
-            width: 38px !important; height: 38px !important;
-            background: transparent !important; border: none !important;
-            border-radius: 50% !important; object-fit: cover !important;
-        }
-        .sidebar .logo-img {
-            width: 44px !important; height: 44px !important;
-            background: transparent !important; border: none !important;
-            border-radius: 50% !important; object-fit: cover !important;
-        }
+        * { -webkit-tap-highlight-color: transparent; }
 
-        /* Back button: bottom-right everywhere → never overlaps headers/buttons */
+        /* Transparent logos, comfortable size */
+        .navbar-logo .logo-img { width: 38px !important; height: 38px !important; background: transparent !important; border: none !important; border-radius: 50% !important; object-fit: cover !important; }
+        .sidebar .logo-img { width: 44px !important; height: 44px !important; background: transparent !important; border: none !important; border-radius: 50% !important; object-fit: cover !important; }
+
+        /* Sidebar brand = clickable home */
+        #sidebarBrand { cursor: pointer; transition: opacity 0.2s ease, transform 0.2s ease; }
+        #sidebarBrand:hover { opacity: 0.85; transform: translateX(3px); }
+
+        /* Back button bottom-right everywhere */
         .back-btn { top: auto !important; bottom: 1.25rem !important; right: 1.25rem !important; z-index: 95 !important; }
 
-        /* App-page micro-interactions (same language as landing) */
+        /* Journal micro-polish: 90% pro + 10% feel */
+        #addTradeBtn { transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1) !important; }
+        #addTradeBtn:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 22px rgba(99, 102, 241, 0.45) !important; }
+        #addTradeBtn:active { transform: translateY(0) scale(0.97) !important; }
+        .filter-btn, .month-btn, .nav-btn-menu { transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
+        .filter-btn:hover { transform: translateY(-1px); }
+        .month-btn:hover { transform: translateY(-1px); }
         .btn:active { transform: translateY(0) scale(0.97) !important; }
-        .table-action-btn:active { transform: scale(0.9) !important; }
+        .table-action-btn { transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
+        .table-action-btn:active { transform: scale(0.88) !important; }
 
+        /* Smooth modal open */
+        .modal-overlay { animation: overlayFade 0.25s ease; }
+        @keyframes overlayFade { from { opacity: 0; } to { opacity: 1; } }
+        .modal { animation: modalIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) !important; }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+        /* Staggered card entrances on app pages */
         .section.active .trade-card,
         .section.active .strategy-card,
         .section.active .goal-card,
@@ -43,28 +55,20 @@
         .section.active .settings-card,
         .section.active .today-card,
         .section.active .stat-card,
-        .section.active .chart-container {
-            animation: cardIn 0.55s var(--ease-smooth) backwards;
-        }
+        .section.active .chart-container { animation: cardIn 0.55s var(--ease-smooth) backwards; }
         .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(2) { animation-delay: 0.06s; }
         .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(3) { animation-delay: 0.12s; }
         .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(4) { animation-delay: 0.18s; }
         .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(5) { animation-delay: 0.24s; }
         .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(6) { animation-delay: 0.3s; }
-        @keyframes cardIn {
-            from { opacity: 0; transform: translateY(18px) scale(0.98); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
+        @keyframes cardIn { from { opacity: 0; transform: translateY(18px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-        /* Dashboard/mobile layout guards (kept) */
+        /* Layout guards */
         .chart-container { height: auto !important; }
         .chart-container canvas { width: 100% !important; height: 260px !important; flex: 0 0 auto !important; }
         .chart-container.tall canvas { height: 320px !important; }
         .dash-two-col .chart-container { min-height: 0 !important; }
-
-        @media (max-width: 900px) {
-            .grid-column, .col-2 { animation-duration: 25s !important; }
-        }
+        @media (max-width: 900px) { .grid-column, .col-2 { animation-duration: 25s !important; } }
         @media (max-width: 560px) {
             .chart-container canvas { height: 220px !important; }
             .chart-container.tall canvas { height: 260px !important; }
@@ -82,7 +86,7 @@
     </style>
 </head>
 <body>
-    <!-- Loading Screen: spinning orbit logo -->
+    <!-- Loading Screen -->
     <div id="loading-screen">
         <div class="loader-content">
             <div class="loader-logo-wrapper">
@@ -193,7 +197,7 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebar" style="display: none;">
         <div class="sidebar-header">
-            <div class="logo">
+            <div class="logo" id="sidebarBrand" title="Back to Home">
                 <img src="Images/logo.png" alt="TradeVault" class="logo-img logo-md">
                 <span class="logo-text">TradeVault</span>
             </div>
@@ -480,7 +484,7 @@
                 <div class="settings-card">
                     <h3>About</h3>
                     <div class="about-info">
-                        <p><strong>TradeVault</strong> v3.1.0</p>
+                        <p><strong>TradeVault</strong> v4.0.0</p>
                         <p>Professional Trading Journal</p>
                         <p>All data is stored locally in your browser</p>
                     </div>
@@ -515,21 +519,24 @@
             const backBtn = document.getElementById('backToHomeBtn');
             const enterBtns = document.querySelectorAll('.enter-btn, #enter-app-btn');
             const viewFeaturesBtn = document.getElementById('view-features-btn');
+            const sidebarBrand = document.getElementById('sidebarBrand');
 
-            function showJournal() {
+            // ---- View state machine: guarantees ONE-CLICK navigation ----
+            let currentView = 'landing';
+
+            function showJournalUI() {
                 landingPage.style.opacity = '0';
                 setTimeout(() => {
                     landingPage.style.display = 'none';
                     mainApp.style.display = 'block';
                     sidebar.style.display = 'flex';
-                    mobileMenuToggle.style.display = 'block';
+                    mobileMenuToggle.style.display = '';   // CSS decides: hidden desktop, visible mobile
                     backBtn.style.display = 'block';
                     if (typeof app !== 'undefined') app.init();
-                    history.pushState({ view: 'journal' }, '', '#journal');
-                }, 500);
+                }, 450);
             }
 
-            function showLanding() {
+            function showLandingUI() {
                 mainApp.style.display = 'none';
                 sidebar.style.display = 'none';
                 mobileMenuToggle.style.display = 'none';
@@ -538,9 +545,25 @@
                 setTimeout(() => { landingPage.style.opacity = '1'; }, 50);
             }
 
-            if (window.location.hash === '#journal') {
+            function setView(view, push = true) {
+                if (view === currentView) return;
+                currentView = view;
+                if (view === 'journal') {
+                    showJournalUI();
+                    if (push) history.pushState({ view: 'journal' }, '', '#journal');
+                } else {
+                    showLandingUI();
+                    if (push) history.pushState({ view: 'landing' }, '', location.pathname);
+                }
+            }
+
+            window.addEventListener('popstate', (e) => {
+                setView(e.state && e.state.view === 'journal' ? 'journal' : 'landing', false);
+            });
+
+            if (location.hash === '#journal') {
                 loadingScreen.style.display = 'none';
-                showJournal();
+                setView('journal', false);
                 history.replaceState({ view: 'journal' }, '', '#journal');
             } else {
                 setTimeout(() => {
@@ -556,56 +579,30 @@
                 }, 1100);
             }
 
-            enterBtns.forEach(btn => btn.addEventListener('click', showJournal));
-
-            backBtn.addEventListener('click', () => {
-                if (history.state && history.state.view === 'journal') {
-                    history.back();
-                } else {
-                    showLanding();
-                }
-            });
-
-            window.addEventListener('popstate', (event) => {
-                if (event.state && event.state.view === 'journal') {
-                    if (mainApp.style.display === 'none') showJournal();
-                } else {
-                    showLanding();
-                }
-            });
+            enterBtns.forEach(b => b.onclick = () => setView('journal'));
+            backBtn.onclick = () => setView('landing');
+            if (sidebarBrand) sidebarBrand.onclick = () => setView('landing');
 
             function scrollToFeatures() {
-                const featuresSection = document.getElementById('features-section');
-                if (featuresSection) featuresSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const f = document.getElementById('features-section');
+                if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-
-            if (viewFeaturesBtn) viewFeaturesBtn.addEventListener('click', scrollToFeatures);
+            if (viewFeaturesBtn) viewFeaturesBtn.onclick = scrollToFeatures;
 
             const navbarLogo = document.querySelector('.navbar-logo');
             const menuBtn = document.querySelector('.nav-btn-menu');
             const dropdown = document.getElementById('navbarDropdown');
 
-            if (navbarLogo) navbarLogo.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+            if (navbarLogo) navbarLogo.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
             if (menuBtn && dropdown) {
-                menuBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    dropdown.classList.toggle('open');
-                });
+                menuBtn.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle('open'); };
                 document.addEventListener('click', () => dropdown.classList.remove('open'));
             }
-
             const dropFeatures = document.getElementById('dropFeatures');
-            if (dropFeatures) dropFeatures.addEventListener('click', () => {
-                if (dropdown) dropdown.classList.remove('open');
-                scrollToFeatures();
-            });
-
+            if (dropFeatures) dropFeatures.onclick = () => { dropdown.classList.remove('open'); scrollToFeatures(); };
             const dropJournal = document.getElementById('dropJournal');
-            if (dropJournal) dropJournal.addEventListener('click', () => {
-                if (dropdown) dropdown.classList.remove('open');
-                showJournal();
-            });
+            if (dropJournal) dropJournal.onclick = () => { dropdown.classList.remove('open'); setView('journal'); };
         });
 
         function initScrollReveal() {
