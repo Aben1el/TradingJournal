@@ -14,38 +14,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- ============================================================
-         BULLETPROOF OVERRIDES — these win over every CSS file
-         ============================================================ -->
+    <!-- BULLETPROOF OVERRIDES — win over every CSS file -->
     <style>
-        /* BIG loading-screen logo */
-        #loading-screen { transition: opacity 0.4s ease; }
-        #loading-screen .loader-logo-img {
-            width: 150px !important;
-            height: 150px !important;
-            border-radius: 50% !important;
-            object-fit: cover !important;
-        }
-        #loading-screen .loader-ring { width: 195px !important; height: 195px !important; }
-        #loading-screen .loader-ring::before { top: -8px !important; left: -8px !important; right: -8px !important; bottom: -8px !important; }
-        #loading-screen .loader-text { font-size: 1.25rem !important; letter-spacing: 0.2em !important; }
-
-        /* BIG navbar + sidebar logos */
         .navbar-logo .logo-img { width: 34px !important; height: 34px !important; border-radius: 50% !important; object-fit: cover !important; }
         .sidebar .logo-img { width: 42px !important; height: 42px !important; border-radius: 50% !important; object-fit: cover !important; }
 
-        /* No-overlap dashboard on phones */
         .chart-container { height: auto !important; }
         .chart-container canvas { width: 100% !important; height: 260px !important; flex: 0 0 auto !important; }
         .chart-container.tall canvas { height: 320px !important; }
         .dash-two-col .chart-container { min-height: 0 !important; }
 
-        /* Faster image scroll on phones */
         @media (max-width: 900px) {
             .grid-column, .col-2 { animation-duration: 25s !important; }
         }
-
-        /* Mobile sizing */
         @media (max-width: 560px) {
             .chart-container canvas { height: 220px !important; }
             .chart-container.tall canvas { height: 260px !important; }
@@ -61,20 +42,25 @@
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
+    <!-- Loading Screen: spinning orbit logo -->
     <div id="loading-screen">
         <div class="loader-content">
             <div class="loader-logo-wrapper">
+                <div class="loader-glow"></div>
+                <div class="loader-orbit"></div>
                 <img src="Images/logo.png" alt="TradeVault" class="loader-logo-img">
-                <div class="loader-ring"></div>
             </div>
-            <div class="loader-text">TradeVault</div>
         </div>
     </div>
 
     <!-- Landing Page -->
     <section id="landing-page" class="landing-section" style="display: none;">
-        <div class="ambient-rays"></div>
+        <!-- Visible aesthetic light rays -->
+        <div class="ambient-rays">
+            <i class="ray ray-1"></i>
+            <i class="ray ray-2"></i>
+            <i class="ray ray-3"></i>
+        </div>
 
         <nav class="landing-navbar">
             <div class="navbar-logo">
@@ -455,7 +441,7 @@
                 <div class="settings-card">
                     <h3>About</h3>
                     <div class="about-info">
-                        <p><strong>TradeVault</strong> v2.4.0</p>
+                        <p><strong>TradeVault</strong> v3.0.0</p>
                         <p>Professional Trading Journal</p>
                         <p>All data is stored locally in your browser</p>
                     </div>
@@ -518,7 +504,6 @@
                 showJournal();
                 history.replaceState({ view: 'journal' }, '', '#journal');
             } else {
-                // FAST loading screen: 0.9 seconds
                 setTimeout(() => {
                     loadingScreen.classList.add('fade-out');
                     setTimeout(() => {
@@ -528,8 +513,8 @@
                             landingPage.classList.add('visible');
                             initScrollReveal();
                         }, 50);
-                    }, 400);
-                }, 900);
+                    }, 450);
+                }, 1100);
             }
 
             enterBtns.forEach(btn => btn.addEventListener('click', showJournal));
@@ -561,9 +546,7 @@
             const menuBtn = document.querySelector('.nav-btn-menu');
             const dropdown = document.getElementById('navbarDropdown');
 
-            if (navbarLogo) {
-                navbarLogo.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-            }
+            if (navbarLogo) navbarLogo.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
             if (menuBtn && dropdown) {
                 menuBtn.addEventListener('click', (e) => {
