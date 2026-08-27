@@ -524,3 +524,18 @@ body {
     animation: logoFloat 2s ease-in-out infinite;
 }
 #loading-screen .loader-ring { width: 130px; height: 130px; }
+/* =========================================
+   LOGO & LOADING — FINAL SIZES (v3)
+   ========================================= */
+#loading-screen { transition: opacity 0.4s ease; }
+
+.loader-logo-img {
+    width: 150px;
+    height: 150px;
+}
+#loading-screen .loader-ring { width: 195px; height: 195px; }
+#loading-screen .loader-ring::before { top: -8px; left: -8px; right: -8px; bottom: -8px; }
+.loader-text { font-size: 1.25rem; letter-spacing: 0.2em; }
+
+.logo-sm { width: 34px; height: 34px; }
+.logo-md { width: 42px; height: 42px; }
