@@ -1,10 +1,149 @@
-// Trades Module
+// Trades Module — CRUD, filters, screenshots + CSV import/export
+
+// ---------- CSV helpers ----------
+function tradesToCSV(trades) {
+    const headers = ['entryDate','symbol','market','direction','entryPrice','exitPrice','stopLoss','positionSize','profitLoss','rMultiple','strategy','session','emotionBefore','discipline','confidence','notes'];
+    const esc = (v) => {
+        if (v === null || v === undefined) return '';
+        const s = String(v);
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const rows = trades.map(t => headers.map(h => esc(t[h])).join(','));
+    return [headers.join(','), ...rows].join('\n');
+}
+
+function parseCSVText(text) {
+    const rows = [];
+    let cur = '', row = [], inQ = false;
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQ) {
+            if (c === '"') {
+                if (text[i + 1] === '"') { cur += '"'; i++; }
+                else inQ = false;
+            } else cur += c;
+        } else if (c === '"') inQ = true;
+        else if (c === ',') { row.push(cur); cur = ''; }
+        else if (c === '\n' || c === '\r') {
+            if (c === '\r' && text[i + 1] === '\n') i++;
+            row.push(cur); cur = '';
+            if (row.some(x => x.trim() !== '')) rows.push(row);
+            row = [];
+        } else cur += c;
+    }
+    row.push(cur);
+    if (row.some(x => x.trim() !== '')) rows.push(row);
+    return rows;
+}
+
+const CSV_ALIASES = {
+    entrydate: 'entryDate', date: 'entryDate', opendate: 'entryDate', time: 'entryDate',
+    symbol: 'symbol', asset: 'symbol', pair: 'symbol', instrument: 'symbol',
+    market: 'market',
+    direction: 'direction', side: 'direction', type: 'direction',
+    entryprice: 'entryPrice', entry: 'entryPrice', openprice: 'entryPrice',
+    exitprice: 'exitPrice', exit: 'exitPrice', closeprice: 'exitPrice',
+    stoploss: 'stopLoss', sl: 'stopLoss',
+    positionsize: 'positionSize', size: 'positionSize', quantity: 'positionSize', units: 'positionSize', volume: 'positionSize',
+    profitloss: 'profitLoss', pl: 'profitLoss', pnl: 'profitLoss', profit: 'profitLoss',
+    rmultiple: 'rMultiple', r: 'rMultiple',
+    strategy: 'strategy', setup: 'strategy',
+    session: 'session',
+    emotionbefore: 'emotionBefore', emotion: 'emotionBefore',
+    discipline: 'discipline',
+    confidence: 'confidence',
+    notes: 'notes', thesis: 'notes', comment: 'notes'
+};
 
 class Trades {
     constructor() {
         this.currentPage = 1;
         this.itemsPerPage = 20;
         this.filters = { search: '', asset: '', strategy: '', result: '', direction: '' };
+        this.setupCSVButtons();
+    }
+
+    // Auto-injects Export/Import CSV buttons (no HTML change needed)
+    setupCSVButtons() {
+        const actions = document.querySelector('#trades .header-actions');
+        if (!actions || document.getElementById('exportCsvBtn')) return;
+
+        const exp = document.createElement('button');
+        exp.id = 'exportCsvBtn';
+        exp.className = 'btn btn-secondary';
+        exp.textContent = 'Export CSV';
+
+        const imp = document.createElement('button');
+        imp.id = 'importCsvBtn';
+        imp.className = 'btn btn-secondary';
+        imp.textContent = 'Import CSV';
+
+        actions.appendChild(exp);
+        actions.appendChild(imp);
+
+        exp.addEventListener('click', async () => {
+            const trades = await db.getAllTrades();
+            if (!trades || trades.length === 0) { showToast('No trades to export yet', 'warning'); return; }
+            const csv = tradesToCSV(trades);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tradevault-trades-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('CSV exported successfully!');
+        });
+
+        imp.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv,text/csv';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    const rows = parseCSVText(await file.text());
+                    if (rows.length < 2) { showToast('CSV has no data rows', 'error'); return; }
+                    const headers = rows[0].map(h => CSV_ALIASES[h.trim().toLowerCase()] || null);
+                    let count = 0;
+                    for (let i = 1; i < rows.length; i++) {
+                        const trade = {};
+                        rows[i].forEach((val, idx) => {
+                            const key = headers[idx];
+                            if (key && val !== undefined && val !== '') trade[key] = val;
+                        });
+                        if (!trade.symbol) continue;
+
+                        let dir = String(trade.direction || '').toLowerCase();
+                        trade.direction = dir.startsWith('b') ? 'long' : dir.startsWith('s') ? 'short' : (dir === 'long' || dir === 'short' ? dir : 'long');
+                        trade.entryPrice = parseFloat(trade.entryPrice) || 0;
+                        trade.exitPrice = parseFloat(trade.exitPrice) || 0;
+                        trade.stopLoss = parseFloat(trade.stopLoss) || undefined;
+                        trade.positionSize = parseFloat(trade.positionSize) || undefined;
+                        trade.profitLoss = parseFloat(trade.profitLoss);
+                        if (isNaN(trade.profitLoss) && trade.entryPrice && trade.exitPrice && trade.positionSize) {
+                            trade.profitLoss = calculatePL(trade.entryPrice, trade.exitPrice, trade.direction, trade.positionSize);
+                        }
+                        trade.profitLoss = isNaN(trade.profitLoss) ? 0 : trade.profitLoss;
+                        trade.rMultiple = parseFloat(trade.rMultiple) || (trade.stopLoss ? calculateRMultiple(trade.entryPrice, trade.exitPrice, trade.stopLoss, trade.direction) : undefined);
+                        trade.discipline = parseInt(trade.discipline) || undefined;
+                        trade.confidence = parseInt(trade.confidence) || undefined;
+                        if (!trade.entryDate) trade.entryDate = new Date().toISOString().split('T')[0];
+
+                        await db.addTrade(trade);
+                        count++;
+                    }
+                    showToast(`Imported ${count} trades!`);
+                    this.loadTrades();
+                    dashboard.loadDashboard();
+                } catch (err) {
+                    console.error(err);
+                    showToast('Invalid CSV file', 'error');
+                }
+            };
+            input.click();
+        });
     }
 
     async loadTrades() {
@@ -148,7 +287,7 @@ class Trades {
                         <div class="form-group"><label>Session</label><select class="form-control" name="session"><option value="">None</option><option value="Asian" ${trade?.session==='Asian'?'selected':''}>Asian</option><option value="London" ${trade?.session==='London'?'selected':''}>London</option><option value="New York" ${trade?.session==='New York'?'selected':''}>New York</option></select></div>
                     </div>
                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-top:1rem;">
-                        <div class="form-group"><label>Emotion Before</label><input type="text" class="form-control" name="emotionBefore" value="${trade?.emotionBefore || ''}"></div>
+                        <div class="form-group"><label>Emotion Before</label><input type="text" class="form-control" name="emotionBefore" value="${trade?.emotionBefore || ''}" placeholder="Calm, FOMO, Confident..."></div>
                         <div class="form-group"><label>Discipline (1-10)</label><input type="number" min="1" max="10" class="form-control" name="discipline" value="${trade?.discipline || ''}"></div>
                         <div class="form-group"><label>Confidence (1-10)</label><input type="number" min="1" max="10" class="form-control" name="confidence" value="${trade?.confidence || ''}"></div>
                     </div>
@@ -203,92 +342,4 @@ class Trades {
                 } catch (e) {
                     showToast('Error saving trade', 'error');
                 }
-            };
-
-            if (fileInput && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    data.screenshot = e.target.result;
-                    saveToDatabase(data);
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                // If editing and no new file, keep old screenshot
-                if (trade && trade.screenshot) {
-                    data.screenshot = trade.screenshot;
-                }
-                saveToDatabase(data);
-            }
-        };
-    }
-
-    async deleteTrade(id) {
-        if (await confirmDialog('Are you sure you want to delete this trade?')) {
-            await db.deleteTrade(id);
-            showToast('Trade deleted');
-            this.loadTrades();
-            dashboard.loadDashboard();
-        }
-    }
-
-    async showTradeDetail(id) {
-        const trade = await db.getTrade(id);
-        if (!trade) return;
-
-        const overlay = document.getElementById('modalOverlay');
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-header">
-                <h2>${trade.symbol} - ${trade.direction.toUpperCase()}</h2>
-                <button class="modal-close" onclick="app.closeModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="trade-detail">
-                    <div class="trade-detail-section">
-                        <h4>Trade Info</h4>
-                        <div class="trade-detail-grid">
-                            <div><strong>Entry:</strong> ${formatNumber(trade.entryPrice, 5)}</div>
-                            <div><strong>Exit:</strong> ${formatNumber(trade.exitPrice, 5)}</div>
-                            <div><strong>Stop Loss:</strong> ${trade.stopLoss ? formatNumber(trade.stopLoss, 5) : 'N/A'}</div>
-                            <div><strong>Size:</strong> ${trade.positionSize || 'N/A'}</div>
-                            <div><strong>Date:</strong> ${formatDate(trade.entryDate)}</div>
-                            <div><strong>Strategy:</strong> ${trade.strategy || 'N/A'}</div>
-                        </div>
-                    </div>
-                    <div class="trade-detail-section">
-                        <h4>Results</h4>
-                        <div class="trade-detail-grid">
-                            <div><strong>P/L:</strong> <span class="${trade.profitLoss >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(trade.profitLoss)}</span></div>
-                            <div><strong>R Multiple:</strong> ${formatNumber(trade.rMultiple, 2)}R</div>
-                        </div>
-                    </div>
-                    <div class="trade-detail-section">
-                        <h4>Psychology</h4>
-                        <div class="trade-detail-grid">
-                            <div><strong>Emotion:</strong> ${trade.emotionBefore || 'N/A'}</div>
-                            <div><strong>Discipline:</strong> ${trade.discipline || 'N/A'}/10</div>
-                            <div><strong>Confidence:</strong> ${trade.confidence || 'N/A'}/10</div>
-                        </div>
-                    </div>
-                    ${trade.notes ? `<div class="trade-detail-section"><h4>Notes</h4><p>${trade.notes}</p></div>` : ''}
-                    ${trade.screenshot ? `
-                    <div class="trade-detail-section">
-                        <h4>Chart Screenshot</h4>
-                        <div class="trade-screenshot-container">
-                            <img src="${trade.screenshot}" alt="Trade Chart">
-                        </div>
-                    </div>` : ''}
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="app.closeModal()">Close</button>
-                <button class="btn btn-primary" onclick="app.closeModal(); trades.showTradeModal(${trade.id})">Edit Trade</button>
-            </div>
-        `;
-        overlay.appendChild(modal);
-        overlay.classList.add('active');
-    }
-}
-
-const trades = new Trades();
+           
