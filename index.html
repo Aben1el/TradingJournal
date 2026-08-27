@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TradeVault - Professional Trading Journal</title>
+    <link rel="icon" type="image/svg+xml" href="Images/favicon.svg?v=2">
     <link rel="icon" type="image/png" href="Images/logo.png?v=3">
     <link rel="apple-touch-icon" href="Images/logo.png?v=3">
     <link rel="stylesheet" href="css/main.css">
@@ -14,11 +15,48 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- BULLETPROOF OVERRIDES — win over every CSS file -->
+    <!-- BULLETPROOF OVERRIDES -->
     <style>
-        .navbar-logo .logo-img { width: 34px !important; height: 34px !important; border-radius: 50% !important; object-fit: cover !important; }
-        .sidebar .logo-img { width: 42px !important; height: 42px !important; border-radius: 50% !important; object-fit: cover !important; }
+        /* Transparent logos — no background circle, comfortable size */
+        .navbar-logo .logo-img {
+            width: 38px !important; height: 38px !important;
+            background: transparent !important; border: none !important;
+            border-radius: 50% !important; object-fit: cover !important;
+        }
+        .sidebar .logo-img {
+            width: 44px !important; height: 44px !important;
+            background: transparent !important; border: none !important;
+            border-radius: 50% !important; object-fit: cover !important;
+        }
 
+        /* Back button: bottom-right everywhere → never overlaps headers/buttons */
+        .back-btn { top: auto !important; bottom: 1.25rem !important; right: 1.25rem !important; z-index: 95 !important; }
+
+        /* App-page micro-interactions (same language as landing) */
+        .btn:active { transform: translateY(0) scale(0.97) !important; }
+        .table-action-btn:active { transform: scale(0.9) !important; }
+
+        .section.active .trade-card,
+        .section.active .strategy-card,
+        .section.active .goal-card,
+        .section.active .calculator-card,
+        .section.active .settings-card,
+        .section.active .today-card,
+        .section.active .stat-card,
+        .section.active .chart-container {
+            animation: cardIn 0.55s var(--ease-smooth) backwards;
+        }
+        .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(2) { animation-delay: 0.06s; }
+        .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(3) { animation-delay: 0.12s; }
+        .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(4) { animation-delay: 0.18s; }
+        .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(5) { animation-delay: 0.24s; }
+        .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(6) { animation-delay: 0.3s; }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(18px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Dashboard/mobile layout guards (kept) */
         .chart-container { height: auto !important; }
         .chart-container canvas { width: 100% !important; height: 260px !important; flex: 0 0 auto !important; }
         .chart-container.tall canvas { height: 320px !important; }
@@ -38,6 +76,8 @@
             .table-action-btn { width: 40px !important; height: 40px !important; padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; }
             .search-input, .filter-select, .form-control { font-size: 1rem !important; }
             .btn { min-height: 44px !important; }
+            .section-header { gap: 0.875rem !important; }
+            .section-header .btn { width: 100%; }
         }
     </style>
 </head>
@@ -55,7 +95,6 @@
 
     <!-- Landing Page -->
     <section id="landing-page" class="landing-section" style="display: none;">
-        <!-- Visible aesthetic light rays -->
         <div class="ambient-rays">
             <i class="ray ray-1"></i>
             <i class="ray ray-2"></i>
@@ -441,7 +480,7 @@
                 <div class="settings-card">
                     <h3>About</h3>
                     <div class="about-info">
-                        <p><strong>TradeVault</strong> v3.0.0</p>
+                        <p><strong>TradeVault</strong> v3.1.0</p>
                         <p>Professional Trading Journal</p>
                         <p>All data is stored locally in your browser</p>
                     </div>
