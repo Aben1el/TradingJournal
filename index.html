@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TradeVault - Professional Trading Journal</title>
-    <link rel="icon" type="image/png" href="Images/logo.png">
+    <link rel="icon" type="image/png" href="Images/logo.png?v=2">
+    <link rel="apple-touch-icon" href="Images/logo.png?v=2">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/dashboard.css">
@@ -410,7 +411,7 @@
                 <div class="settings-card">
                     <h3>About</h3>
                     <div class="about-info">
-                        <p><strong>TradeVault</strong> v2.2.0</p>
+                        <p><strong>TradeVault</strong> v2.3.0</p>
                         <p>Professional Trading Journal</p>
                         <p>All data is stored locally in your browser</p>
                     </div>
@@ -473,6 +474,7 @@
                 showJournal();
                 history.replaceState({ view: 'journal' }, '', '#journal');
             } else {
+                // FAST loading screen: 0.9 seconds
                 setTimeout(() => {
                     loadingScreen.classList.add('fade-out');
                     setTimeout(() => {
@@ -482,8 +484,8 @@
                             landingPage.classList.add('visible');
                             initScrollReveal();
                         }, 50);
-                    }, 600);
-                }, 2000);
+                    }, 400);
+                }, 900);
             }
 
             enterBtns.forEach(btn => btn.addEventListener('click', showJournal));
