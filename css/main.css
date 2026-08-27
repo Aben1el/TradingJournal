@@ -444,3 +444,36 @@ body {
     .scroll-card { height: 220px; }
     .landing-visual { height: 480px; }
 }
+
+/* =========================================
+   LOADER v4 — BIG LOGO + 3D COIN-FLIP SPIN
+   ========================================= */
+#loading-screen .loader-logo-wrapper {
+    width: 210px !important;
+    height: 210px !important;
+    perspective: 900px;
+}
+
+#loading-screen .loader-logo-img {
+    width: 176px !important;
+    height: 176px !important;
+    animation: logoCoinFlip 2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite !important;
+}
+
+#loading-screen .loader-orbit {
+    inset: -18px !important;
+    border-width: 2.5px !important;
+    animation: orbitSpin 1.4s linear infinite !important;
+}
+
+#loading-screen .loader-glow {
+    inset: -64px !important;
+}
+
+@keyframes logoCoinFlip {
+    0%   { transform: rotateY(0deg)   translateY(0); }
+    25%  { transform: rotateY(90deg)  translateY(-14px); }
+    50%  { transform: rotateY(180deg) translateY(0); }
+    75%  { transform: rotateY(270deg) translateY(-14px); }
+    100% { transform: rotateY(360deg) translateY(0); }
+}
