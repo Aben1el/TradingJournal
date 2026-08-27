@@ -1,4 +1,4 @@
-// Main Application Controller
+// Main Application Controller — all bindings use onclick (self-replacing, no duplicates)
 
 class App {
     constructor() {
@@ -37,14 +37,14 @@ class App {
 
     setupNavigation() {
         document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
+            item.onclick = (e) => {
                 e.preventDefault();
                 this.navigateTo(item.dataset.section);
-            });
+            };
         });
         const toggle = document.getElementById('mobileMenuToggle');
         const sidebar = document.getElementById('sidebar');
-        if (toggle && sidebar) toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        if (toggle && sidebar) toggle.onclick = () => sidebar.classList.toggle('open');
     }
 
     navigateTo(section) {
@@ -70,21 +70,21 @@ class App {
 
     setupDashboardFilters() {
         document.querySelectorAll('.date-filter .filter-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.onclick = (e) => {
                 document.querySelectorAll('.date-filter .filter-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
                 dashboard.setFilter(e.target.dataset.filter);
-            });
+            };
         });
     }
 
     setupTradeFilters() {
         const search = document.getElementById('tradeSearch');
-        if (search) search.addEventListener('input', debounce(e => { trades.filters.search = e.target.value; trades.loadTrades(); }, 300));
+        if (search) search.oninput = debounce(e => { trades.filters.search = e.target.value; trades.loadTrades(); }, 300);
 
         const bind = (id, key) => {
             const el = document.getElementById(id);
-            if (el) el.addEventListener('change', e => { trades.filters[key] = e.target.value; trades.loadTrades(); });
+            if (el) el.onchange = e => { trades.filters[key] = e.target.value; trades.loadTrades(); };
         };
         bind('filterAsset', 'asset');
         bind('filterStrategy', 'strategy');
@@ -92,17 +92,21 @@ class App {
         bind('filterDirection', 'direction');
 
         const clearBtn = document.getElementById('clearFiltersBtn');
-        if (clearBtn) clearBtn.addEventListener('click', () => {
+        if (clearBtn) clearBtn.onclick = () => {
             trades.filters = { search: '', asset: '', strategy: '', result: '', direction: '' };
             ['tradeSearch', 'filterAsset', 'filterStrategy', 'filterResult', 'filterDirection'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
             trades.loadTrades();
-        });
+        };
 
+        // ONE Add Trade form, always. Guard ignores clicks while a modal is open.
         const addTradeBtn = document.getElementById('addTradeBtn');
-        if (addTradeBtn) addTradeBtn.addEventListener('click', () => trades.showTradeModal());
+        if (addTradeBtn) addTradeBtn.onclick = () => {
+            if (document.getElementById('modalOverlay').classList.contains('active')) return;
+            trades.showTradeModal();
+        };
     }
 
     setupSettings() {
@@ -113,7 +117,7 @@ class App {
         if (nameInput) nameInput.value = localStorage.getItem('tv_name') || '';
         if (balanceInput) balanceInput.value = localStorage.getItem('tv_starting_balance') || '';
 
-        if (saveBtn) saveBtn.addEventListener('click', () => {
+        if (saveBtn) saveBtn.onclick = () => {
             const name = (nameInput.value || '').trim() || 'Trader';
             const balance = parseFloat(balanceInput.value);
             localStorage.setItem('tv_name', name);
@@ -121,10 +125,10 @@ class App {
             this.applyProfile();
             dashboard.loadDashboard();
             showToast('Settings saved!');
-        });
+        };
 
         const exportBtn = document.getElementById('exportDataBtn');
-        if (exportBtn) exportBtn.addEventListener('click', async () => {
+        if (exportBtn) exportBtn.onclick = async () => {
             const data = await db.exportAllData();
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -134,10 +138,10 @@ class App {
             a.click();
             URL.revokeObjectURL(url);
             showToast('Data exported successfully!');
-        });
+        };
 
         const importBtn = document.getElementById('importDataBtn');
-        if (importBtn) importBtn.addEventListener('click', () => {
+        if (importBtn) importBtn.onclick = () => {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json';
@@ -156,10 +160,10 @@ class App {
                 }
             };
             input.click();
-        });
+        };
 
         const clearBtn = document.getElementById('clearDataBtn');
-        if (clearBtn) clearBtn.addEventListener('click', async () => {
+        if (clearBtn) clearBtn.onclick = async () => {
             if (await confirmDialog('Are you sure? This will delete ALL data permanently!')) {
                 await db.clear('trades');
                 await db.clear('strategies');
@@ -168,7 +172,7 @@ class App {
                 showToast('All data cleared');
                 this.init();
             }
-        });
+        };
     }
 
     closeModal() {
