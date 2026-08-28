@@ -1,0 +1,73 @@
+/* ============ TRADEVAULT PROFILE ============ */
+.profile-body { min-height: 100vh; background: #0a0a0a; overflow-x: hidden; }
+
+.profile-top { display: flex; align-items: center; gap: 0.75rem; padding: 1.25rem 1.5rem; position: relative; z-index: 2; }
+.profile-top .spacer { flex: 1; }
+.profile-back {
+    color: var(--text-secondary); text-decoration: none; font-size: 0.875rem;
+    padding: 0.5rem 1.1rem; border: 1px solid var(--border-color); border-radius: 100px;
+    transition: all 0.2s ease;
+}
+.profile-back:hover { color: #fff; border-color: var(--border-hover); transform: translateY(-1px); }
+
+.profile-wrap {
+    max-width: 1000px; margin: 1rem auto 4rem; padding: 0 1.25rem;
+    display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem;
+    position: relative; z-index: 2;
+    animation: profIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes profIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+
+/* Identity card */
+.profile-card {
+    background: rgba(22, 22, 24, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px;
+    padding: 2rem; text-align: center; height: fit-content;
+}
+.avatar-ring {
+    width: 110px; height: 110px; margin: 0 auto 1.25rem; border-radius: 50%; padding: 4px;
+    background: var(--accent-gradient);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.35);
+}
+.avatar-ring:hover { transform: scale(1.06) rotate(4deg); }
+.avatar-ring img, .avatar-placeholder { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #141417; }
+.avatar-placeholder { display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; color: #fff; }
+.avatar-actions { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1.25rem; }
+.btn-small { padding: 0.45rem 0.9rem; font-size: 0.75rem; border-radius: 100px; }
+.profile-card h2 { font-size: 1.375rem; font-weight: 800; letter-spacing: -0.02em; }
+.prof-name { color: var(--text-secondary); font-size: 0.9375rem; margin-top: 0.25rem; }
+.prof-email { color: var(--text-tertiary); font-size: 0.8125rem; margin-top: 0.25rem; }
+.prof-since {
+    display: inline-block; margin-top: 0.875rem; padding: 0.375rem 0.875rem;
+    background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25);
+    color: #a78bfa; border-radius: 100px; font-size: 0.75rem; font-weight: 500;
+}
+
+/* Stats */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.pstat {
+    background: rgba(22, 22, 24, 0.6); backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 16px;
+    padding: 1.1rem 1.25rem; position: relative; overflow: hidden;
+    transition: all 0.25s ease;
+}
+.pstat:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.14); }
+.pstat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent-gradient); opacity: 0.6; }
+.pstat-label { font-size: 0.6875rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; margin-bottom: 0.4rem; }
+.pstat-value { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+
+/* Edit card */
+.edit-card {
+    background: rgba(22, 22, 24, 0.6); backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 20px; padding: 1.75rem;
+}
+.edit-card h3 { font-size: 1.125rem; font-weight: 700; margin-bottom: 1.25rem; }
+.edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+#saveProfileBtn { border-radius: 100px; min-height: 46px; padding: 0 2rem; }
+#saveProfileBtn:disabled { opacity: 0.6; cursor: wait; transform: none !important; }
+
+@media (max-width: 860px) {
+    .profile-wrap { grid-template-columns: 1fr; }
+    .edit-grid { grid-template-columns: 1fr; }
+}
