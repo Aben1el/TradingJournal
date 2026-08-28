@@ -6,6 +6,7 @@ const tvConfigured =
   typeof TV_SUPABASE_ANON_KEY === 'string' && TV_SUPABASE_ANON_KEY.length > 20;
 
 let tvClient = null;
+window.tvClient = null;
 
 function tvBootClient() {
   if (tvClient || !window.supabase || !tvConfigured) return;
@@ -13,11 +14,11 @@ function tvBootClient() {
     tvClient = window.supabase.createClient(TV_SUPABASE_URL, TV_SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true }
     });
+    window.tvClient = tvClient;   // ← THE FIX
     window.dispatchEvent(new Event('tv-client-ready'));
   } catch (e) { console.warn('Supabase client error', e); }
 }
 
-// Try 3 different CDNs until one works (beats ad-blockers & outages)
 (async () => {
   if (!tvConfigured) return;
   const sources = [
