@@ -1,181 +1,226 @@
-// IndexedDB Database Module
+// ============ TradeVault Data Layer (Supabase, per-account) ============
+// Same public API as before — all modules keep working unchanged.
+
+const T_MAP = {
+    entryDate: 'entry_date', entryPrice: 'entry_price', exitPrice: 'exit_price',
+    stopLoss: 'stop_loss', positionSize: 'position_size', profitLoss: 'profit_loss',
+    rMultiple: 'r_multiple', emotionBefore: 'emotion_before', screenshot: 'screenshot_url'
+};
+
+function _toSnake(obj, map) {
+    const o = {};
+    for (const k in obj) {
+        if (obj[k] === undefined) continue;
+        o[map && map[k] ? map[k] : k] = obj[k];
+    }
+    return o;
+}
+function _toCamel(row, map) {
+    const o = Object.assign({}, row);
+    for (const c in map) { if (row[map[c]] !== undefined) o[c] = row[map[c]]; }
+    return o;
+}
+
+let _uid = null;
+async function tvUid() {
+    if (_uid) return _uid;
+    if (!window.tvClient) return null;
+    const { data } = await tvClient.auth.getSession();
+    _uid = data.session ? data.session.user.id : null;
+    return _uid;
+}
+function tvActiveId() { return localStorage.getItem('tv_active_account_id'); }
+
+async function _resizeDataUrl(dataUrl, max) {
+    return new Promise((res) => {
+        const img = new Image();
+        img.onload = () => {
+            const scale = Math.min(1, max / Math.max(img.width, img.height));
+            const c = document.createElement('canvas');
+            c.width = Math.round(img.width * scale);
+            c.height = Math.round(img.height * scale);
+            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+            res(c.toDataURL('image/jpeg', 0.8));
+        };
+        img.onerror = () => res(dataUrl);
+        img.src = dataUrl;
+    });
+}
+
 class Database {
-    constructor() {
-        this.dbName = 'EdgeJournalDB';
-        this.version = 1;
-        this.db = null;
+    async init() { await tvUid(); return true; }
+
+    // ---------- TRADES ----------
+    async getAllTrades() {
+        const uid = await tvUid(); const acc = tvActiveId();
+        if (!uid || !acc || !window.tvClient) return [];
+        const { data } = await tvClient.from('trades').select('*')
+            .eq('user_id', uid).eq('account_id', acc)
+            .order('entry_date', { ascending: true });
+        return (data || []).map(r => _toCamel(r, T_MAP));
     }
-
-    async init() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, this.version);
-
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-                this.db = request.result;
-                resolve(this.db);
-            };
-
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-
-                if (!db.objectStoreNames.contains('trades')) {
-                    const tradesStore = db.createObjectStore('trades', { keyPath: 'id', autoIncrement: true });
-                    tradesStore.createIndex('symbol', 'symbol', { unique: false });
-                    tradesStore.createIndex('strategy', 'strategy', { unique: false });
-                    tradesStore.createIndex('entryDate', 'entryDate', { unique: false });
-                    tradesStore.createIndex('direction', 'direction', { unique: false });
-                }
-
-                if (!db.objectStoreNames.contains('strategies')) {
-                    const strategiesStore = db.createObjectStore('strategies', { keyPath: 'id', autoIncrement: true });
-                    strategiesStore.createIndex('name', 'name', { unique: false });
-                }
-
-                if (!db.objectStoreNames.contains('journal')) {
-                    const journalStore = db.createObjectStore('journal', { keyPath: 'id', autoIncrement: true });
-                    journalStore.createIndex('date', 'date', { unique: false });
-                    journalStore.createIndex('type', 'type', { unique: false });
-                }
-
-                if (!db.objectStoreNames.contains('goals')) {
-                    const goalsStore = db.createObjectStore('goals', { keyPath: 'id', autoIncrement: true });
-                    goalsStore.createIndex('type', 'type', { unique: false });
-                }
-            };
-        });
+    async getTrade(id) {
+        const uid = await tvUid();
+        if (!uid) return null;
+        const { data } = await tvClient.from('trades').select('*').eq('id', id).eq('user_id', uid).single();
+        return data ? _toCamel(data, T_MAP) : null;
     }
-
-    // Generic CRUD
-    async add(storeName, data) {
-        const transaction = this.db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        return new Promise((resolve, reject) => {
-            const request = store.add(data);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async get(storeName, id) {
-        const transaction = this.db.transaction([storeName], 'readonly');
-        const store = transaction.objectStore(storeName);
-        return new Promise((resolve, reject) => {
-            const request = store.get(id);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async getAll(storeName) {
-        const transaction = this.db.transaction([storeName], 'readonly');
-        const store = transaction.objectStore(storeName);
-        return new Promise((resolve, reject) => {
-            const request = store.getAll();
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async update(storeName, data) {
-        const transaction = this.db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        return new Promise((resolve, reject) => {
-            const request = store.put(data);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async delete(storeName, id) {
-        const transaction = this.db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        return new Promise((resolve, reject) => {
-            const request = store.delete(id);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    async clear(storeName) {
-        const transaction = this.db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        return new Promise((resolve, reject) => {
-            const request = store.clear();
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    // Trades
     async addTrade(trade) {
-        trade.createdAt = new Date().toISOString();
-        trade.updatedAt = new Date().toISOString();
-        return await this.add('trades', trade);
+        const uid = await tvUid(); const acc = tvActiveId();
+        if (!uid || !acc) throw new Error('No account selected');
+        const row = _toSnake(trade, T_MAP);
+        if (row.screenshot_url && row.screenshot_url.startsWith('data:')) {
+            row.screenshot_url = await _resizeDataUrl(row.screenshot_url, 1280);
+        }
+        delete row.id;
+        row.user_id = uid; row.account_id = acc;
+        const { error } = await tvClient.from('trades').insert(row);
+        if (error) throw error;
+        return true;
     }
-    async getTrade(id) { return await this.get('trades', id); }
-    async getAllTrades() { return await this.getAll('trades'); }
     async updateTrade(trade) {
-        trade.updatedAt = new Date().toISOString();
-        return await this.update('trades', trade);
+        const uid = await tvUid();
+        const row = _toSnake(trade, T_MAP);
+        if (row.screenshot_url && row.screenshot_url.startsWith('data:')) {
+            row.screenshot_url = await _resizeDataUrl(row.screenshot_url, 1280);
+        }
+        const id = row.id; delete row.id; delete row.user_id; delete row.account_id;
+        const { error } = await tvClient.from('trades').update(row).eq('id', id).eq('user_id', uid);
+        if (error) throw error;
+        return true;
     }
-    async deleteTrade(id) { return await this.delete('trades', id); }
-
-    // Strategies
-    async addStrategy(strategy) {
-        strategy.createdAt = new Date().toISOString();
-        return await this.add('strategies', strategy);
+    async deleteTrade(id) {
+        const uid = await tvUid();
+        const { error } = await tvClient.from('trades').delete().eq('id', id).eq('user_id', uid);
+        if (error) throw error;
     }
-    async getAllStrategies() { return await this.getAll('strategies'); }
-    async updateStrategy(strategy) { return await this.update('strategies', strategy); }
-    async deleteStrategy(id) { return await this.delete('strategies', id); }
 
-    // Reviews (Daily / Weekly / Monthly journal entries)
+    // ---------- STRATEGIES ----------
+    async getAllStrategies() {
+        const uid = await tvUid(); const acc = tvActiveId();
+        if (!uid || !acc) return [];
+        const { data } = await tvClient.from('strategies').select('*')
+            .eq('user_id', uid).eq('account_id', acc).order('created_at');
+        return data || [];
+    }
+    async addStrategy(s) {
+        const uid = await tvUid(); const acc = tvActiveId();
+        const { error } = await tvClient.from('strategies').insert({ user_id: uid, account_id: acc, name: s.name, description: s.description || '' });
+        if (error) throw error;
+    }
+    async updateStrategy(s) {
+        const uid = await tvUid();
+        const { error } = await tvClient.from('strategies').update({ name: s.name, description: s.description }).eq('id', s.id).eq('user_id', uid);
+        if (error) throw error;
+    }
+    async deleteStrategy(id) {
+        const uid = await tvUid();
+        const { error } = await tvClient.from('strategies').delete().eq('id', id).eq('user_id', uid);
+        if (error) throw error;
+    }
+
+    // ---------- REVIEWS ----------
+    async getAllReviews() {
+        const uid = await tvUid(); const acc = tvActiveId();
+        if (!uid || !acc) return [];
+        const { data } = await tvClient.from('reviews').select('*')
+            .eq('user_id', uid).eq('account_id', acc).order('date', { ascending: false });
+        return (data || []).map(r => Object.assign({ id: r.id, type: r.type, date: r.date }, r.content));
+    }
     async addReview(review) {
-        review.createdAt = new Date().toISOString();
-        return await this.add('journal', review);
+        const uid = await tvUid(); const acc = tvActiveId();
+        const { type, date } = review;
+        const content = Object.assign({}, review);
+        delete content.id; delete content.type; delete content.date; delete content.createdAt;
+        const { error } = await tvClient.from('reviews').insert({ user_id: uid, account_id: acc, type, date: date || new Date().toISOString().split('T')[0], content });
+        if (error) throw error;
     }
-    async getAllReviews() { return await this.getAll('journal'); }
-    async updateReview(review) { return await this.update('journal', review); }
-    async deleteReview(id) { return await this.delete('journal', id); }
-
-    // Goals
-    async addGoal(goal) {
-        goal.createdAt = new Date().toISOString();
-        return await this.add('goals', goal);
+    async updateReview(review) { return this.addReview(review); }
+    async deleteReview(id) {
+        const uid = await tvUid();
+        const { error } = await tvClient.from('reviews').delete().eq('id', id).eq('user_id', uid);
+        if (error) throw error;
     }
-    async getAllGoals() { return await this.getAll('goals'); }
-    async updateGoal(goal) { return await this.update('goals', goal); }
-    async deleteGoal(id) { return await this.delete('goals', id); }
 
-    // Export / Import
+    // ---------- GOALS ----------
+    async getAllGoals() {
+        const uid = await tvUid(); const acc = tvActiveId();
+        if (!uid || !acc) return [];
+        const { data } = await tvClient.from('goals').select('*')
+            .eq('user_id', uid).eq('account_id', acc).order('created_at', { ascending: false });
+        return data || [];
+    }
+    async addGoal(g) {
+        const uid = await tvUid(); const acc = tvActiveId();
+        const row = Object.assign({}, g); delete row.id;
+        row.user_id = uid; row.account_id = acc;
+        const { error } = await tvClient.from('goals').insert(row);
+        if (error) throw error;
+    }
+    async updateGoal(g) {
+        const uid = await tvUid();
+        const row = Object.assign({}, g); const id = row.id; delete row.id; delete row.user_id; delete row.account_id;
+        const { error } = await tvClient.from('goals').update(row).eq('id', id).eq('user_id', uid);
+        if (error) throw error;
+    }
+    async deleteGoal(id) {
+        const uid = await tvUid();
+        const { error } = await tvClient.from('goals').delete().eq('id', id).eq('user_id', uid);
+        if (error) throw error;
+    }
+
+    // ---------- SETTINGS / DATA MGMT ----------
+    async clear(storeName) {
+        const uid = await tvUid();
+        const table = storeName === 'journal' ? 'reviews' : storeName;
+        const { error } = await tvClient.from(table).delete().eq('user_id', uid);
+        if (error) throw error;
+    }
+
     async exportAllData() {
-        const trades = await this.getAllTrades();
-        const strategies = await this.getAllStrategies();
-        const goals = await this.getAllGoals();
-        const reviews = await this.getAllReviews();
-
+        const uid = await tvUid();
+        const [trades, strategies, goals, reviews] = await Promise.all([
+            tvClient.from('trades').select('*').eq('user_id', uid),
+            tvClient.from('strategies').select('*').eq('user_id', uid),
+            tvClient.from('goals').select('*').eq('user_id', uid),
+            tvClient.from('reviews').select('*').eq('user_id', uid)
+        ]);
         return {
-            trades,
-            strategies,
-            goals,
-            reviews,
+            trades: (trades.data || []).map(r => _toCamel(r, T_MAP)),
+            strategies: strategies.data || [],
+            goals: goals.data || [],
+            reviews: (reviews.data || []).map(r => Object.assign({ id: r.id, type: r.type, date: r.date }, r.content)),
             exportDate: new Date().toISOString(),
-            version: '2.0.0'
+            version: '3.0.0'
         };
     }
 
     async importAllData(data) {
-        await this.clear('trades');
-        await this.clear('strategies');
-        await this.clear('goals');
-        await this.clear('journal');
-
-        for (const trade of data.trades || []) await this.add('trades', trade);
-        for (const strategy of data.strategies || []) await this.add('strategies', strategy);
-        for (const goal of data.goals || []) await this.add('goals', goal);
-        for (const review of data.reviews || []) await this.add('journal', review);
+        await this.clear('trades'); await this.clear('strategies'); await this.clear('goals'); await this.clear('journal');
+        const uid = await tvUid(); const acc = tvActiveId();
+        for (const t of data.trades || []) {
+            const row = _toSnake(t, T_MAP); delete row.id; row.user_id = uid; row.account_id = acc;
+            await tvClient.from('trades').insert(row);
+        }
+        for (const s of data.strategies || []) {
+            await tvClient.from('strategies').insert({ user_id: uid, account_id: acc, name: s.name, description: s.description || '' });
+        }
+        for (const g of data.goals || []) {
+            const row = Object.assign({}, g); delete row.id; row.user_id = uid; row.account_id = acc;
+            await tvClient.from('goals').insert(row);
+        }
+        for (const r of data.reviews || []) {
+            const content = Object.assign({}, r); delete content.id; delete content.type; delete content.date;
+            await tvClient.from('reviews').insert({ user_id: uid, account_id: acc, type: r.type, date: r.date, content });
+        }
     }
 }
 
 const db = new Database();
+
+// auto-load the Accounts UI module
+(function () {
+    const s = document.createElement('script');
+    s.src = 'js/accounts.js';
+    document.body.appendChild(s);
+})();
