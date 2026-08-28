@@ -43,7 +43,11 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div class="acc-menu" id="accMenu" style="display:none">
-                ${accs.map(a => `<button class="acc-item ${a.id === act.id ? 'active' : ''}" data-id="${a.id}">${EMO[a.type]} ${a.name}</button>`).join('')}
+                ${accs.map(a => `
+                    <div class="acc-row ${a.id === act.id ? 'active' : ''}">
+                        <button class="acc-item" data-id="${a.id}">${EMO[a.type]} ${a.name}</button>
+                        <button class="acc-del" data-del="${a.id}" title="Delete account">🗑</button>
+                    </div>`).join('')}
                 <button class="acc-item acc-add" id="accAddBtn">+ Add Account</button>
             </div>` : `<button class="acc-current" id="accAddBtn">+ Create Trading Account</button>`;
 
@@ -51,6 +55,7 @@
         const menu = document.getElementById('accMenu');
         if (cur && menu) cur.onclick = (e) => { e.stopPropagation(); menu.style.display = menu.style.display === 'none' ? 'flex' : 'none'; };
         document.addEventListener('click', () => { const m = document.getElementById('accMenu'); if (m) m.style.display = 'none'; });
+
         box.querySelectorAll('.acc-item[data-id]').forEach(b => {
             b.onclick = async (e) => {
                 e.stopPropagation();
@@ -59,6 +64,28 @@
                 refreshApp();
             };
         });
+
+        box.querySelectorAll('.acc-del[data-del]').forEach(b => {
+            b.onclick = async (e) => {
+                e.stopPropagation();
+                const id = b.dataset.del;
+                const acc = accs.find(a => a.id === id);
+                if (typeof confirmDialog !== 'undefined') {
+                    const ok = await confirmDialog(`Delete "${acc ? acc.name : 'account'}" and ALL of its trades, reviews and goals? This cannot be undone.`);
+                    if (!ok) return;
+                }
+                const { error } = await tvClient.from('trading_accounts').delete().eq('id', id);
+                if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+                if (activeId() === id) {
+                    const rest = accs.filter(a => a.id !== id);
+                    if (rest.length) setActive(rest[0].id); else localStorage.removeItem('tv_active_account_id');
+                }
+                showToast('Account deleted');
+                await renderSwitcher();
+                refreshApp();
+            };
+        });
+
         const add = document.getElementById('accAddBtn');
         if (add) add.onclick = (e) => { e.stopPropagation(); openModal(); };
     }
