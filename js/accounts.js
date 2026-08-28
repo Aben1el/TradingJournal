@@ -19,6 +19,7 @@
     }
     const activeId = () => localStorage.getItem('tv_active_account_id');
     const setActive = (id) => localStorage.setItem('tv_active_account_id', id);
+    const refreshApp = () => { if (typeof app !== 'undefined') app.init(); };
 
     // ---------- Switcher UI ----------
     async function renderSwitcher() {
@@ -55,7 +56,7 @@
                 e.stopPropagation();
                 setActive(b.dataset.id);
                 await renderSwitcher();
-                if (window.app) app.init();
+                refreshApp();
             };
         });
         const add = document.getElementById('accAddBtn');
@@ -145,7 +146,7 @@
             ov.remove();
             await renderSwitcher();
             showToast(`${LBL[chosenType]} created! 🎉`);
-            if (window.app) app.init();
+            refreshApp();
         };
     }
 
