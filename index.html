@@ -400,7 +400,7 @@
                 <div class="settings-card">
                     <h3>About</h3>
                     <div class="about-info">
-                        <p><strong>TradeVault</strong> v4.2.0</p>
+                        <p><strong>TradeVault</strong> v4.3.0</p>
                         <p>Professional Trading Journal</p>
                         <p>All data is stored locally in your browser</p>
                     </div>
@@ -413,7 +413,6 @@
     <div class="toast-container" id="toastContainer"></div>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- Supabase loader: tries UMD build, falls back to ESM. Always works. -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script type="module">
         if (!window.supabase) {
@@ -450,9 +449,10 @@
             const sidebarBrand = document.getElementById('sidebarBrand');
             const sidebarProfile = document.getElementById('sidebarProfile');
 
-            // ---- AUTH STATE (waits for Supabase client, max 2.5s) ----
+            // ---- AUTH: race-proof check ----
             let tvAuthChecked = false;
             let tvUser = null;
+            let currentView = 'landing';
 
             const tvWaitClient = () => new Promise((resolve) => {
                 if (window.tvClient) return resolve();
@@ -460,38 +460,43 @@
                 setTimeout(() => resolve(), 2500);
             });
 
-            (async () => {
+            async function tvCheckAuth() {
+                if (tvAuthChecked) return tvUser;
                 await tvWaitClient();
-                if (!window.tvClient) { tvAuthChecked = true; return; }
-                try {
-                    const { data } = await tvClient.auth.getSession();
-                    tvUser = (data.session && data.session.user) ? data.session.user : null;
-                    if (tvUser) {
-                        const { data: prof } = await tvClient.from('profiles').select('*').eq('id', tvUser.id).single();
-                        if (prof) {
-                            window.tvProfile = prof;
-                            const nameEl = document.getElementById('sidebarUserName');
-                            if (nameEl) nameEl.textContent = prof.username || 'Trader';
-                            const statusEl = sidebarProfile ? sidebarProfile.querySelector('.user-status') : null;
-                            if (statusEl) statusEl.textContent = 'Pro Trader';
-                            const av = document.getElementById('userAvatarLetter');
-                            if (prof.avatar_url && av) {
-                                const img = document.createElement('img');
-                                img.src = prof.avatar_url; img.className = 'user-avatar-img'; img.alt = 'avatar';
-                                av.replaceWith(img);
-                            } else if (av) {
-                                av.textContent = (prof.username || 'T').charAt(0).toUpperCase();
+                if (window.tvClient) {
+                    try {
+                        const { data } = await tvClient.auth.getSession();
+                        tvUser = (data.session && data.session.user) ? data.session.user : null;
+                        if (tvUser) {
+                            const { data: prof } = await tvClient.from('profiles').select('*').eq('id', tvUser.id).single();
+                            if (prof) {
+                                window.tvProfile = prof;
+                                const nameEl = document.getElementById('sidebarUserName');
+                                if (nameEl) nameEl.textContent = prof.username || 'Trader';
+                                const statusEl = sidebarProfile ? sidebarProfile.querySelector('.user-status') : null;
+                                if (statusEl) statusEl.textContent = 'Pro Trader';
+                                const av = document.getElementById('userAvatarLetter');
+                                if (prof.avatar_url && av) {
+                                    const img = document.createElement('img');
+                                    img.src = prof.avatar_url; img.className = 'user-avatar-img'; img.alt = 'avatar';
+                                    av.replaceWith(img);
+                                } else if (av) {
+                                    av.textContent = (prof.username || 'T').charAt(0).toUpperCase();
+                                }
+                                const greet = document.getElementById('greetingTitle');
+                                if (greet) greet.textContent = `${getGreeting()}, ${prof.username || 'Trader'}`;
                             }
-                            const greet = document.getElementById('greetingTitle');
-                            if (greet) greet.textContent = `${getGreeting()}, ${prof.username || 'Trader'}`;
                         }
-                    }
-                } catch (e) { console.warn('session check failed', e); }
+                    } catch (e) { console.warn('session check failed', e); }
+                }
                 tvAuthChecked = true;
-            })();
+                return tvUser;
+            }
 
-            // ---- View state machine with auth gate ----
-            let currentView = 'landing';
+            // If the check finishes late and we're already inside logged out → kick to login
+            tvCheckAuth().then(u => {
+                if (window.tvClient && !u && currentView === 'journal') location.href = 'auth.html';
+            });
 
             function showJournalUI() {
                 landingPage.style.opacity = '0';
@@ -514,10 +519,10 @@
                 setTimeout(() => { landingPage.style.opacity = '1'; }, 50);
             }
 
-            function setView(view, push = true) {
-                if (view === 'journal' && window.tvClient && tvAuthChecked && !tvUser) {
-                    location.href = 'auth.html';
-                    return;
+            async function setView(view, push = true) {
+                if (view === 'journal' && window.tvClient) {
+                    const u = await tvCheckAuth();
+                    if (!u) { location.href = 'auth.html'; return; }
                 }
                 if (view === currentView) return;
                 currentView = view;
@@ -536,8 +541,15 @@
 
             if (location.hash === '#journal') {
                 loadingScreen.style.display = 'none';
-                setView('journal', false);
-                history.replaceState({ view: 'journal' }, '', '#journal');
+                (async () => {
+                    if (window.tvClient) {
+                        const u = await tvCheckAuth();
+                        if (!u) { location.href = 'auth.html'; return; }
+                    }
+                    currentView = 'journal';
+                    showJournalUI();
+                    history.replaceState({ view: 'journal' }, '', '#journal');
+                })();
             } else {
                 setTimeout(() => {
                     loadingScreen.classList.add('fade-out');
@@ -553,9 +565,10 @@
             backBtn.onclick = () => setView('landing');
             if (sidebarBrand) sidebarBrand.onclick = () => setView('landing');
 
-            if (sidebarProfile) sidebarProfile.onclick = () => {
+            if (sidebarProfile) sidebarProfile.onclick = async () => {
                 if (!window.tvClient) { showToast('Supabase still connecting… refresh & try again', 'warning'); return; }
-                location.href = tvUser ? 'profile.html' : 'auth.html';
+                const u = await tvCheckAuth();
+                location.href = u ? 'profile.html' : 'auth.html';
             };
 
             function scrollToFeatures() {
