@@ -9,7 +9,7 @@
 
     async function renderFunded() {
         const dash = document.getElementById('dashboard');
-        if (!dash || !window.db) return;
+        if (!dash || typeof db === 'undefined') return;
         let panel = document.getElementById('fundedPanel');
         const acc = await activeAccount();
 
@@ -25,7 +25,6 @@
 
         const trades = await db.getAllTrades();
 
-        // ---- real calculations from this account's trades ----
         const net = trades.reduce((s, t) => s + (t.profitLoss || 0), 0);
         const balance = (acc.starting_balance || 0) + net;
         const profit = net;
@@ -35,7 +34,6 @@
             .filter(t => new Date(t.entryDate).toDateString() === todayKey)
             .reduce((s, t) => s + (t.profitLoss || 0), 0);
 
-        // high-water-mark drawdown
         const sorted = [...trades].sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
         let run = 0, peak = 0, dd = 0;
         sorted.forEach(t => { run += t.profitLoss || 0; peak = Math.max(peak, run); dd = Math.max(dd, peak - run); });
@@ -48,7 +46,6 @@
         const remDaily = dailyLimit ? dailyLimit - usedDaily : null;
         const remDD = ddLimit ? ddLimit - dd : null;
 
-        // ---- warnings (only from user-configured rules) ----
         const warnings = [];
         if (dailyLimit) {
             if (remDaily <= 0) warnings.push({ type: 'danger', text: `🛑 Daily loss limit reached (${formatCurrency(usedDaily)} of ${formatCurrency(dailyLimit)} used). Consider stopping for today.` });
@@ -109,7 +106,7 @@
     window.tvFundedRender = renderFunded;
 
     function hookDashboard() {
-        if (window.dashboard && !dashboard.__fundedHooked) {
+        if (typeof dashboard !== 'undefined' && !dashboard.__fundedHooked) {
             dashboard.__fundedHooked = true;
             const orig = dashboard.loadDashboard.bind(dashboard);
             dashboard.loadDashboard = async function () { const r = await orig(); renderFunded(); return r; };
