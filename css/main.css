@@ -477,3 +477,37 @@ body {
     75%  { transform: rotateY(270deg) translateY(-14px); }
     100% { transform: rotateY(360deg) translateY(0); }
 }
+
+/* ============ DARK INPUTS (auth + profile + everywhere) ============ */
+.form-group { margin-bottom: 1rem; }
+.form-group label {
+    display: block; font-size: 0.8125rem; font-weight: 500;
+    color: var(--text-secondary); margin-bottom: 0.4rem;
+}
+.form-control {
+    width: 100%; padding: 0.7rem 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px; color: #fff; font-size: 0.9rem; font-family: inherit;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.form-control:focus {
+    outline: none; border-color: rgba(99, 102, 241, 0.5);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+.form-control::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+/* ============ SMOOTH SIDEBAR (push / overlay) ============ */
+.sidebar { transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+.main-content { transition: margin-left 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+.sidebar-backdrop {
+    position: fixed; inset: 0; z-index: 99;
+    background: rgba(5, 5, 8, 0.6);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
+@media (max-width: 1024px) {
+    body.sb-push .main-content { margin-left: var(--sidebar-width); }
+    body.sb-push .sidebar { box-shadow: 24px 0 60px rgba(0, 0, 0, 0.45); }
+    body.sb-overlay .sidebar-backdrop { opacity: 1; pointer-events: auto; }
+}
