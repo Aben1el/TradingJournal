@@ -19,18 +19,18 @@
     <style>
         * { -webkit-tap-highlight-color: transparent; }
 
-        /* Transparent logos, comfortable size */
         .navbar-logo .logo-img { width: 38px !important; height: 38px !important; background: transparent !important; border: none !important; border-radius: 50% !important; object-fit: cover !important; }
         .sidebar .logo-img { width: 44px !important; height: 44px !important; background: transparent !important; border: none !important; border-radius: 50% !important; object-fit: cover !important; }
 
-        /* Sidebar brand = clickable home */
         #sidebarBrand { cursor: pointer; transition: opacity 0.2s ease, transform 0.2s ease; }
         #sidebarBrand:hover { opacity: 0.85; transform: translateX(3px); }
 
-        /* Back button bottom-right everywhere */
+        #sidebarProfile { cursor: pointer; transition: opacity 0.2s ease; }
+        #sidebarProfile:hover { opacity: 0.85; }
+        .user-avatar-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255, 255, 255, 0.12); }
+
         .back-btn { top: auto !important; bottom: 1.25rem !important; right: 1.25rem !important; z-index: 95 !important; }
 
-        /* Journal micro-polish: 90% pro + 10% feel */
         #addTradeBtn { transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1) !important; }
         #addTradeBtn:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 22px rgba(99, 102, 241, 0.45) !important; }
         #addTradeBtn:active { transform: translateY(0) scale(0.97) !important; }
@@ -41,13 +41,11 @@
         .table-action-btn { transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
         .table-action-btn:active { transform: scale(0.88) !important; }
 
-        /* Smooth modal open */
         .modal-overlay { animation: overlayFade 0.25s ease; }
         @keyframes overlayFade { from { opacity: 0; } to { opacity: 1; } }
         .modal { animation: modalIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) !important; }
         @keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: none; } }
 
-        /* Staggered card entrances on app pages */
         .section.active .trade-card,
         .section.active .strategy-card,
         .section.active .goal-card,
@@ -63,7 +61,6 @@
         .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(6) { animation-delay: 0.3s; }
         @keyframes cardIn { from { opacity: 0; transform: translateY(18px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-        /* Layout guards */
         .chart-container { height: auto !important; }
         .chart-container canvas { width: 100% !important; height: 260px !important; flex: 0 0 auto !important; }
         .chart-container.tall canvas { height: 320px !important; }
@@ -247,7 +244,7 @@
         </nav>
         
         <div class="sidebar-footer">
-            <div class="user-info">
+            <div class="user-info" id="sidebarProfile" title="Your profile">
                 <div class="user-avatar" id="userAvatarLetter">T</div>
                 <div class="user-details">
                     <div class="user-name" id="sidebarUserName">Trader</div>
@@ -484,7 +481,7 @@
                 <div class="settings-card">
                     <h3>About</h3>
                     <div class="about-info">
-                        <p><strong>TradeVault</strong> v4.0.0</p>
+                        <p><strong>TradeVault</strong> v4.1.0</p>
                         <p>Professional Trading Journal</p>
                         <p>All data is stored locally in your browser</p>
                     </div>
@@ -497,6 +494,8 @@
     <div class="toast-container" id="toastContainer"></div>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
     <script src="js/db.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/calculators.js"></script>
@@ -520,8 +519,44 @@
             const enterBtns = document.querySelectorAll('.enter-btn, #enter-app-btn');
             const viewFeaturesBtn = document.getElementById('view-features-btn');
             const sidebarBrand = document.getElementById('sidebarBrand');
+            const sidebarProfile = document.getElementById('sidebarProfile');
 
-            // ---- View state machine: guarantees ONE-CLICK navigation ----
+            // ---- AUTH STATE (gate) ----
+            let tvAuthChecked = false;
+            let tvUser = null;
+
+            (async () => {
+                if (!window.tvClient) { tvAuthChecked = true; return; }
+                try {
+                    const { data } = await tvClient.auth.getSession();
+                    tvUser = (data.session && data.session.user) ? data.session.user : null;
+                    if (tvUser) {
+                        const { data: prof } = await tvClient.from('profiles').select('*').eq('id', tvUser.id).single();
+                        if (prof) {
+                            window.tvProfile = prof;
+                            const nameEl = document.getElementById('sidebarUserName');
+                            if (nameEl) nameEl.textContent = prof.username || 'Trader';
+                            const statusEl = sidebarProfile ? sidebarProfile.querySelector('.user-status') : null;
+                            if (statusEl) statusEl.textContent = 'Pro Trader';
+                            const av = document.getElementById('userAvatarLetter');
+                            if (prof.avatar_url && av) {
+                                const img = document.createElement('img');
+                                img.src = prof.avatar_url;
+                                img.className = 'user-avatar-img';
+                                img.alt = 'avatar';
+                                av.replaceWith(img);
+                            } else if (av) {
+                                av.textContent = (prof.username || 'T').charAt(0).toUpperCase();
+                            }
+                            const greet = document.getElementById('greetingTitle');
+                            if (greet) greet.textContent = `${getGreeting()}, ${prof.username || 'Trader'}`;
+                        }
+                    }
+                } catch (e) { console.warn('session check failed', e); }
+                tvAuthChecked = true;
+            })();
+
+            // ---- View state machine with auth gate ----
             let currentView = 'landing';
 
             function showJournalUI() {
@@ -530,7 +565,7 @@
                     landingPage.style.display = 'none';
                     mainApp.style.display = 'block';
                     sidebar.style.display = 'flex';
-                    mobileMenuToggle.style.display = '';   // CSS decides: hidden desktop, visible mobile
+                    mobileMenuToggle.style.display = '';
                     backBtn.style.display = 'block';
                     if (typeof app !== 'undefined') app.init();
                 }, 450);
@@ -546,6 +581,10 @@
             }
 
             function setView(view, push = true) {
+                if (view === 'journal' && window.tvClient && tvAuthChecked && !tvUser) {
+                    location.href = 'auth.html';
+                    return;
+                }
                 if (view === currentView) return;
                 currentView = view;
                 if (view === 'journal') {
@@ -563,6 +602,7 @@
 
             if (location.hash === '#journal') {
                 loadingScreen.style.display = 'none';
+                if (window.tvClient && !tvUser && tvAuthChecked) { location.href = 'auth.html'; return; }
                 setView('journal', false);
                 history.replaceState({ view: 'journal' }, '', '#journal');
             } else {
@@ -582,6 +622,11 @@
             enterBtns.forEach(b => b.onclick = () => setView('journal'));
             backBtn.onclick = () => setView('landing');
             if (sidebarBrand) sidebarBrand.onclick = () => setView('landing');
+
+            if (sidebarProfile) sidebarProfile.onclick = () => {
+                if (!window.tvClient) { showToast('Connect Supabase to use profiles', 'warning'); return; }
+                location.href = tvUser ? 'profile.html' : 'auth.html';
+            };
 
             function scrollToFeatures() {
                 const f = document.getElementById('features-section');
