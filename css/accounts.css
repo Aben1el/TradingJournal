@@ -95,3 +95,13 @@
     .funded-card.wide { grid-column: span 1; }
     .f-value { font-size: 1.125rem; }
 }
+
+/* ============ ACCOUNT ROW + DELETE ============ */
+.acc-row { display: flex; align-items: center; gap: 0.25rem; }
+.acc-row .acc-item { flex: 1; }
+.acc-del {
+    background: transparent; border: none; color: var(--text-tertiary);
+    cursor: pointer; font-size: 0.8rem; padding: 0.5rem; border-radius: 8px;
+    transition: all 0.15s ease;
+}
+.acc-del:hover { color: #ef4444; background: rgba(239, 68, 68, 0.12); }
