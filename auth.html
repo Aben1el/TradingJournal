@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in — TradeVault</title>
+    <link rel="icon" type="image/svg+xml" href="Images/favicon.svg?v=4">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="auth-body">
+    <div class="ambient-rays"><i class="ray ray-1"></i><i class="ray ray-2"></i><i class="ray ray-3"></i></div>
+
+    <div class="auth-wrap">
+        <a class="auth-brand" href="index.html">
+            <img src="Images/logo.png" alt="TradeVault">
+            <span>TradeVault</span>
+        </a>
+
+        <div class="auth-card">
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tabLogin">Log In</button>
+                <button class="auth-tab" id="tabSignup">Sign Up</button>
+            </div>
+
+            <div id="configWarning" class="auth-alert warning" style="display:none;">
+                Supabase is not configured yet. Add your Project URL and anon key in <strong>js/config.js</strong>.
+            </div>
+            <div id="authError" class="auth-alert error" style="display:none;"></div>
+            <div id="authSuccess" class="auth-alert success" style="display:none;"></div>
+
+            <form id="loginForm" class="auth-form" novalidate>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input class="form-control" type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="pw-wrap">
+                        <input class="form-control" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+                        <button type="button" class="pw-toggle" data-target="loginPassword" aria-label="Show password">👁</button>
+                    </div>
+                </div>
+                <div class="auth-row">
+                    <label class="checkbox"><input type="checkbox" id="rememberMe" checked> Remember me</label>
+                    <button type="button" class="link-btn" id="forgotBtn">Forgot password?</button>
+                </div>
+                <button class="btn btn-primary auth-submit" id="loginBtn" type="submit">Log In</button>
+            </form>
+
+            <form id="signupForm" class="auth-form" style="display:none;" novalidate>
+                <div class="form-group">
+                    <label>Full name</label>
+                    <input class="form-control" type="text" id="suName" placeholder="Your name" autocomplete="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input class="form-control" type="text" id="suUsername" placeholder="Trader01" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input class="form-control" type="email" id="suEmail" placeholder="you@example.com" autocomplete="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="pw-wrap">
+                        <input class="form-control" type="password" id="suPassword" placeholder="Min 8 chars, 1 number" autocomplete="new-password" required>
+                        <button type="button" class="pw-toggle" data-target="suPassword" aria-label="Show password">👁</button>
+                    </div>
+                    <div class="pw-hint" id="pwHint">Use 8+ characters with at least one number.</div>
+                </div>
+                <div class="form-group">
+                    <label>Confirm password</label>
+                    <div class="pw-wrap">
+                        <input class="form-control" type="password" id="suConfirm" placeholder="Repeat password" autocomplete="new-password" required>
+                        <button type="button" class="pw-toggle" data-target="suConfirm" aria-label="Show password">👁</button>
+                    </div>
+                </div>
+                <button class="btn btn-primary auth-submit" id="signupBtn" type="submit">Create Account</button>
+            </form>
+        </div>
+
+        <a class="auth-back" href="index.html">← Back to home</a>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
