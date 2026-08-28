@@ -1,0 +1,66 @@
+/* ============ ACCOUNT SWITCHER ============ */
+.acc-switcher { position: relative; padding: 0.875rem 1rem; border-bottom: 1px solid var(--border-color); }
+.acc-current {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25);
+    color: var(--text-primary); border-radius: 12px; padding: 0.625rem 0.875rem;
+    font-size: 0.8125rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: all 0.2s ease;
+}
+.acc-current:hover { background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.4); }
+.acc-menu {
+    position: absolute; left: 1rem; right: 1rem; top: calc(100% - 0.4rem); z-index: 60;
+    background: rgba(18, 18, 22, 0.97); border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px; padding: 0.4rem; display: flex; flex-direction: column; gap: 0.25rem;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    animation: accDrop 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes accDrop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.acc-item {
+    background: transparent; border: none; border-radius: 10px; padding: 0.625rem 0.75rem;
+    color: var(--text-secondary); font-size: 0.8125rem; font-weight: 500; text-align: left;
+    cursor: pointer; font-family: inherit; transition: all 0.15s ease;
+}
+.acc-item:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+.acc-item.active { background: rgba(99, 102, 241, 0.15); color: #fff; }
+.acc-add { color: #a78bfa; font-weight: 600; border-top: 1px solid rgba(255, 255, 255, 0.06); border-radius: 0 0 10px 10px; }
+
+/* ============ ACCOUNT MODAL ============ */
+.acc-overlay {
+    position: fixed; inset: 0; z-index: 300; background: rgba(5, 5, 8, 0.8);
+    backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center;
+    padding: 1.25rem; animation: accFade 0.25s ease; overflow-y: auto;
+}
+@keyframes accFade { from { opacity: 0; } to { opacity: 1; } }
+.acc-modal {
+    width: 100%; max-width: 640px; background: rgba(22, 22, 24, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 2rem;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6);
+    animation: accIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    margin: auto;
+}
+@keyframes accIn { from { opacity: 0; transform: translateY(24px) scale(0.98); } to { opacity: 1; transform: none; } }
+.acc-modal h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+.acc-sub { color: var(--text-secondary); font-size: 0.875rem; margin: 0.375rem 0 1.5rem; }
+
+.acc-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; margin-bottom: 1.5rem; }
+.acc-type {
+    background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px; padding: 1.25rem 1rem; cursor: pointer; font-family: inherit;
+    display: flex; flex-direction: column; gap: 0.375rem; align-items: flex-start; text-align: left;
+    color: var(--text-primary); transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.acc-type:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.2); }
+.acc-type.selected { border-color: #6366f1; background: rgba(99, 102, 241, 0.12); box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25); }
+.acc-emo { font-size: 1.5rem; }
+.acc-type strong { font-size: 0.9375rem; }
+.acc-type small { color: var(--text-secondary); font-size: 0.75rem; line-height: 1.4; }
+
+.acc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; }
+.acc-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+
+@media (max-width: 640px) {
+    .acc-types { grid-template-columns: 1fr; }
+    .acc-grid { grid-template-columns: 1fr; }
+    .acc-modal { padding: 1.5rem; }
+}
