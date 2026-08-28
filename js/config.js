@@ -17,5 +17,22 @@ function tvBootClient() {
   } catch (e) { console.warn('Supabase client error', e); }
 }
 
-tvBootClient();
+// Try 3 different CDNs until one works (beats ad-blockers & outages)
+(async () => {
+  if (!tvConfigured) return;
+  const sources = [
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm',
+    'https://esm.sh/@supabase/supabase-js@2',
+    'https://cdn.skypack.dev/@supabase/supabase-js@2'
+  ];
+  for (const url of sources) {
+    try {
+      const m = await import(url);
+      if (m && m.createClient) { window.supabase = { createClient: m.createClient }; break; }
+    } catch (e) { console.warn('CDN failed:', url); }
+  }
+  tvBootClient();
+  window.dispatchEvent(new Event('tv-supabase-ready'));
+})();
+
 window.addEventListener('tv-supabase-ready', tvBootClient);
