@@ -15,22 +15,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- BULLETPROOF OVERRIDES -->
     <style>
         * { -webkit-tap-highlight-color: transparent; }
-
         .navbar-logo .logo-img { width: 38px !important; height: 38px !important; background: transparent !important; border: none !important; border-radius: 50% !important; object-fit: cover !important; }
         .sidebar .logo-img { width: 44px !important; height: 44px !important; background: transparent !important; border: none !important; border-radius: 50% !important; object-fit: cover !important; }
-
         #sidebarBrand { cursor: pointer; transition: opacity 0.2s ease, transform 0.2s ease; }
         #sidebarBrand:hover { opacity: 0.85; transform: translateX(3px); }
-
         #sidebarProfile { cursor: pointer; transition: opacity 0.2s ease; }
         #sidebarProfile:hover { opacity: 0.85; }
         .user-avatar-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255, 255, 255, 0.12); }
-
         .back-btn { top: auto !important; bottom: 1.25rem !important; right: 1.25rem !important; z-index: 95 !important; }
-
         #addTradeBtn { transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1) !important; }
         #addTradeBtn:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 22px rgba(99, 102, 241, 0.45) !important; }
         #addTradeBtn:active { transform: translateY(0) scale(0.97) !important; }
@@ -40,27 +34,17 @@
         .btn:active { transform: translateY(0) scale(0.97) !important; }
         .table-action-btn { transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1); }
         .table-action-btn:active { transform: scale(0.88) !important; }
-
         .modal-overlay { animation: overlayFade 0.25s ease; }
         @keyframes overlayFade { from { opacity: 0; } to { opacity: 1; } }
         .modal { animation: modalIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) !important; }
         @keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: none; } }
-
-        .section.active .trade-card,
-        .section.active .strategy-card,
-        .section.active .goal-card,
-        .section.active .calculator-card,
-        .section.active .settings-card,
-        .section.active .today-card,
-        .section.active .stat-card,
-        .section.active .chart-container { animation: cardIn 0.55s var(--ease-smooth) backwards; }
+        .section.active .trade-card, .section.active .strategy-card, .section.active .goal-card, .section.active .calculator-card, .section.active .settings-card, .section.active .today-card, .section.active .stat-card, .section.active .chart-container { animation: cardIn 0.55s var(--ease-smooth) backwards; }
         .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(2) { animation-delay: 0.06s; }
         .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(3) { animation-delay: 0.12s; }
         .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(4) { animation-delay: 0.18s; }
         .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(5) { animation-delay: 0.24s; }
         .section.active :is(.trade-card, .stat-card, .today-card, .chart-container, .calculator-card, .goal-card, .strategy-card, .settings-card):nth-child(6) { animation-delay: 0.3s; }
         @keyframes cardIn { from { opacity: 0; transform: translateY(18px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
         .chart-container { height: auto !important; }
         .chart-container canvas { width: 100% !important; height: 260px !important; flex: 0 0 auto !important; }
         .chart-container.tall canvas { height: 320px !important; }
@@ -83,7 +67,6 @@
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
     <div id="loading-screen">
         <div class="loader-content">
             <div class="loader-logo-wrapper">
@@ -94,7 +77,6 @@
         </div>
     </div>
 
-    <!-- Landing Page -->
     <section id="landing-page" class="landing-section" style="display: none;">
         <div class="ambient-rays">
             <i class="ray ray-1"></i>
@@ -191,7 +173,6 @@
 
     <button id="backToHomeBtn" class="back-btn">← Home</button>
 
-    <!-- Sidebar Navigation -->
     <aside class="sidebar" id="sidebar" style="display: none;">
         <div class="sidebar-header">
             <div class="logo" id="sidebarBrand" title="Back to Home">
@@ -201,46 +182,16 @@
         </div>
         
         <nav class="sidebar-nav">
-            <a href="#dashboard" class="nav-item active" data-section="dashboard">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                <span>Dashboard</span>
-            </a>
-            <a href="#journal" class="nav-item" data-section="journal">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                <span>Journal</span>
-            </a>
-            <a href="#reviews" class="nav-item" data-section="reviews">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                <span>Reviews</span>
-            </a>
-            <a href="#trades" class="nav-item" data-section="trades">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
-                <span>Trades</span>
-            </a>
-            <a href="#strategies" class="nav-item" data-section="strategies">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                <span>Strategies</span>
-            </a>
-            <a href="#analytics" class="nav-item" data-section="analytics">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                <span>Analytics</span>
-            </a>
-            <a href="#psychology" class="nav-item" data-section="psychology">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                <span>Psychology</span>
-            </a>
-            <a href="#calculators" class="nav-item" data-section="calculators">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
-                <span>Calculators</span>
-            </a>
-            <a href="#goals" class="nav-item" data-section="goals">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                <span>Goals</span>
-            </a>
-            <a href="#settings" class="nav-item" data-section="settings">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                <span>Settings</span>
-            </a>
+            <a href="#dashboard" class="nav-item active" data-section="dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></a>
+            <a href="#journal" class="nav-item" data-section="journal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>Journal</span></a>
+            <a href="#reviews" class="nav-item" data-section="reviews"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>Reviews</span></a>
+            <a href="#trades" class="nav-item" data-section="trades"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg><span>Trades</span></a>
+            <a href="#strategies" class="nav-item" data-section="strategies"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>Strategies</span></a>
+            <a href="#analytics" class="nav-item" data-section="analytics"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Analytics</span></a>
+            <a href="#psychology" class="nav-item" data-section="psychology"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>Psychology</span></a>
+            <a href="#calculators" class="nav-item" data-section="calculators"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/><line x1="12" y1="18" x2="12" y2="18"/></svg><span>Calculators</span></a>
+            <a href="#goals" class="nav-item" data-section="goals"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Goals</span></a>
+            <a href="#settings" class="nav-item" data-section="settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span></a>
         </nav>
         
         <div class="sidebar-footer">
@@ -259,7 +210,6 @@
     </button>
     
     <main class="main-content" id="mainContent" style="display: none;">
-        <!-- ============ DASHBOARD ============ -->
         <section class="section active" id="dashboard">
             <div class="dash-header">
                 <div>
@@ -274,15 +224,9 @@
                     <button class="filter-btn" data-filter="today">Today</button>
                 </div>
             </div>
-
             <div class="today-grid" id="todayGrid"></div>
             <div class="stats-grid" id="statsGrid"></div>
-
-            <div class="chart-container tall">
-                <div class="chart-header"><h2>Equity Curve</h2></div>
-                <canvas id="equityChart"></canvas>
-            </div>
-
+            <div class="chart-container tall"><div class="chart-header"><h2>Equity Curve</h2></div><canvas id="equityChart"></canvas></div>
             <div class="chart-container">
                 <div class="chart-header">
                     <h2>Monthly Performance</h2>
@@ -294,13 +238,9 @@
                 </div>
                 <div class="monthly-grid" id="monthlyGrid"></div>
             </div>
-
             <div class="dash-two-col">
                 <div class="chart-container">
-                    <div class="chart-header">
-                        <h2>Recent Trades</h2>
-                        <button class="btn btn-text" id="viewAllTradesBtn">View All →</button>
-                    </div>
+                    <div class="chart-header"><h2>Recent Trades</h2><button class="btn btn-text" id="viewAllTradesBtn">View All →</button></div>
                     <div id="recentTradesList"></div>
                 </div>
                 <div class="chart-container">
@@ -308,7 +248,6 @@
                     <div id="smartInsights"></div>
                 </div>
             </div>
-
             <div class="analytics-grid">
                 <div class="chart-container"><h3>Win/Loss Distribution</h3><canvas id="winLossChart"></canvas></div>
                 <div class="chart-container"><h3>Performance by Strategy</h3><canvas id="strategyChart"></canvas></div>
@@ -317,19 +256,14 @@
             </div>
         </section>
         
-        <!-- ============ JOURNAL ============ -->
         <section class="section" id="journal">
             <div class="section-header">
                 <h1>Trade Journal</h1>
-                <button class="btn btn-primary" id="addTradeBtn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Add Trade
-                </button>
+                <button class="btn btn-primary" id="addTradeBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Trade</button>
             </div>
             <div class="journal-grid" id="journalGrid"></div>
         </section>
 
-        <!-- ============ REVIEWS ============ -->
         <section class="section" id="reviews">
             <div class="section-header">
                 <h1>Trading Reviews</h1>
@@ -348,13 +282,10 @@
             </div>
         </section>
         
-        <!-- ============ TRADES ============ -->
         <section class="section" id="trades">
             <div class="section-header">
                 <h1>Trade History</h1>
-                <div class="header-actions">
-                    <input type="text" class="search-input" id="tradeSearch" placeholder="Search trades...">
-                </div>
+                <div class="header-actions"><input type="text" class="search-input" id="tradeSearch" placeholder="Search trades..."></div>
             </div>
             <div class="filters-bar">
                 <select class="filter-select" id="filterAsset"><option value="">All Assets</option></select>
@@ -372,20 +303,15 @@
             <div class="pagination" id="pagination"></div>
         </section>
         
-        <!-- ============ STRATEGIES ============ -->
         <section class="section" id="strategies">
             <div class="section-header">
                 <h1>Strategies</h1>
-                <button class="btn btn-primary" onclick="strategies.showStrategyModal()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Add Strategy
-                </button>
+                <button class="btn btn-primary" onclick="strategies.showStrategyModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Strategy</button>
             </div>
             <div class="table-container" id="strategyTableWrap" style="margin-bottom:1.5rem;"></div>
             <div class="strategies-grid" id="strategiesGrid"></div>
         </section>
         
-        <!-- ============ ANALYTICS ============ -->
         <section class="section" id="analytics">
             <div class="section-header"><h1>Analytics</h1></div>
             <div class="analytics-full-grid">
@@ -396,7 +322,6 @@
             </div>
         </section>
         
-        <!-- ============ PSYCHOLOGY ============ -->
         <section class="section" id="psychology">
             <div class="section-header"><h1>Psychology</h1></div>
             <div class="chart-container" style="margin-bottom:1.5rem;">
@@ -409,7 +334,6 @@
             </div>
         </section>
         
-        <!-- ============ CALCULATORS ============ -->
         <section class="section" id="calculators">
             <div class="section-header"><h1>Calculators</h1></div>
             <div class="calculators-grid">
@@ -448,19 +372,14 @@
             </div>
         </section>
         
-        <!-- ============ GOALS ============ -->
         <section class="section" id="goals">
             <div class="section-header">
                 <h1>Goals</h1>
-                <button class="btn btn-primary" onclick="goals.showGoalModal()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Add Goal
-                </button>
+                <button class="btn btn-primary" onclick="goals.showGoalModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Goal</button>
             </div>
             <div class="goals-grid" id="goalsGrid"></div>
         </section>
         
-        <!-- ============ SETTINGS ============ -->
         <section class="section" id="settings">
             <div class="section-header"><h1>Settings</h1></div>
             <div class="settings-grid">
@@ -481,7 +400,7 @@
                 <div class="settings-card">
                     <h3>About</h3>
                     <div class="about-info">
-                        <p><strong>TradeVault</strong> v4.1.0</p>
+                        <p><strong>TradeVault</strong> v4.2.0</p>
                         <p>Professional Trading Journal</p>
                         <p>All data is stored locally in your browser</p>
                     </div>
@@ -494,7 +413,17 @@
     <div class="toast-container" id="toastContainer"></div>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase loader: tries UMD build, falls back to ESM. Always works. -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script type="module">
+        if (!window.supabase) {
+            try {
+                const m = await import('https://esm.sh/@supabase/supabase-js@2');
+                window.supabase = { createClient: m.createClient };
+            } catch (e) { console.warn('Supabase CDN load failed', e); }
+        }
+        window.dispatchEvent(new Event('tv-supabase-ready'));
+    </script>
     <script src="js/config.js"></script>
     <script src="js/db.js"></script>
     <script src="js/utils.js"></script>
@@ -521,11 +450,18 @@
             const sidebarBrand = document.getElementById('sidebarBrand');
             const sidebarProfile = document.getElementById('sidebarProfile');
 
-            // ---- AUTH STATE (gate) ----
+            // ---- AUTH STATE (waits for Supabase client, max 2.5s) ----
             let tvAuthChecked = false;
             let tvUser = null;
 
+            const tvWaitClient = () => new Promise((resolve) => {
+                if (window.tvClient) return resolve();
+                window.addEventListener('tv-client-ready', () => resolve(), { once: true });
+                setTimeout(() => resolve(), 2500);
+            });
+
             (async () => {
+                await tvWaitClient();
                 if (!window.tvClient) { tvAuthChecked = true; return; }
                 try {
                     const { data } = await tvClient.auth.getSession();
@@ -541,9 +477,7 @@
                             const av = document.getElementById('userAvatarLetter');
                             if (prof.avatar_url && av) {
                                 const img = document.createElement('img');
-                                img.src = prof.avatar_url;
-                                img.className = 'user-avatar-img';
-                                img.alt = 'avatar';
+                                img.src = prof.avatar_url; img.className = 'user-avatar-img'; img.alt = 'avatar';
                                 av.replaceWith(img);
                             } else if (av) {
                                 av.textContent = (prof.username || 'T').charAt(0).toUpperCase();
@@ -602,7 +536,6 @@
 
             if (location.hash === '#journal') {
                 loadingScreen.style.display = 'none';
-                if (window.tvClient && !tvUser && tvAuthChecked) { location.href = 'auth.html'; return; }
                 setView('journal', false);
                 history.replaceState({ view: 'journal' }, '', '#journal');
             } else {
@@ -611,10 +544,7 @@
                     setTimeout(() => {
                         loadingScreen.style.display = 'none';
                         landingPage.style.display = 'block';
-                        setTimeout(() => {
-                            landingPage.classList.add('visible');
-                            initScrollReveal();
-                        }, 50);
+                        setTimeout(() => { landingPage.classList.add('visible'); initScrollReveal(); }, 50);
                     }, 450);
                 }, 1100);
             }
@@ -624,7 +554,7 @@
             if (sidebarBrand) sidebarBrand.onclick = () => setView('landing');
 
             if (sidebarProfile) sidebarProfile.onclick = () => {
-                if (!window.tvClient) { showToast('Connect Supabase to use profiles', 'warning'); return; }
+                if (!window.tvClient) { showToast('Supabase still connecting… refresh & try again', 'warning'); return; }
                 location.href = tvUser ? 'profile.html' : 'auth.html';
             };
 
@@ -639,7 +569,6 @@
             const dropdown = document.getElementById('navbarDropdown');
 
             if (navbarLogo) navbarLogo.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-
             if (menuBtn && dropdown) {
                 menuBtn.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle('open'); };
                 document.addEventListener('click', () => dropdown.classList.remove('open'));
@@ -653,10 +582,7 @@
         function initScrollReveal() {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('revealed');
-                        observer.unobserve(entry.target);
-                    }
+                    if (entry.isIntersecting) { entry.target.classList.add('revealed'); observer.unobserve(entry.target); }
                 });
             }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
             document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
