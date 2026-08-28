@@ -1,7 +1,9 @@
 // ============ TradeVault Auth (Supabase) ============
-// tvClient is created in js/config.js
 
-(function authPageInit() {
+function authPageInit() {
+    if (authPageInit.done) return;
+    authPageInit.done = true;
+
     const $ = (id) => document.getElementById(id);
     if (!$('loginForm')) return;
 
@@ -46,7 +48,7 @@
     $('loginForm').onsubmit = async (e) => {
         e.preventDefault();
         hideAlerts();
-        if (!tvClient) return showError('Configure Supabase in js/config.js first.');
+        if (!tvClient) return showError('Supabase is still connecting… refresh and try again.');
         const email = $('loginEmail').value.trim();
         const password = $('loginPassword').value;
         if (!emailOk(email)) return showError('Enter a valid email address.');
@@ -64,7 +66,7 @@
     $('signupForm').onsubmit = async (e) => {
         e.preventDefault();
         hideAlerts();
-        if (!tvClient) return showError('Configure Supabase in js/config.js first.');
+        if (!tvClient) return showError('Supabase is still connecting… refresh and try again.');
         const fullName = $('suName').value.trim();
         const username = $('suUsername').value.trim();
         const email = $('suEmail').value.trim();
@@ -95,11 +97,21 @@
 
     $('forgotBtn').onclick = async () => {
         hideAlerts();
-        if (!tvClient) return showError('Configure Supabase in js/config.js first.');
+        if (!tvClient) return showError('Supabase is still connecting… refresh and try again.');
         const email = $('loginEmail').value.trim();
         if (!emailOk(email)) return showError('Type your email in the field first, then tap "Forgot password?".');
         const { error } = await tvClient.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/auth.html' });
         if (error) return showError(error.message);
         showSuccess('Password reset email sent. Check your inbox.');
     };
-})();
+}
+
+// Start when the Supabase client is ready (or immediately if already ready)
+if (window.tvClient) authPageInit();
+window.addEventListener('tv-client-ready', authPageInit);
+setTimeout(() => {
+    if (!window.tvClient) {
+        const w = document.getElementById('configWarning');
+        if (w && !authPageInit.done) w.style.display = 'block';
+    }
+}, 3000);
