@@ -1,13 +1,12 @@
-// Main Application Controller — all bindings use onclick (self-replacing, no duplicates)
+// Main Application Controller — onclick bindings (no duplicate listeners)
 
 class App {
-    constructor() {
-        this.currentSection = 'dashboard';
-    }
+    constructor() { this.currentSection = 'dashboard'; }
 
     async init() {
         try {
             await db.init();
+            this.guardModals();
             this.applyProfile();
             this.setupNavigation();
             this.setupDashboardFilters();
@@ -27,6 +26,23 @@ class App {
         }
     }
 
+    // ONE modal at a time — forever — for EVERY modal opener
+    guardModals() {
+        const busy = () => {
+            const ov = document.getElementById('modalOverlay');
+            return ov && (ov.classList.contains('active') || ov.children.length > 0);
+        };
+        const wrap = (obj, fn) => {
+            if (!obj || obj['__g_' + fn]) return;
+            obj['__g_' + fn] = true;
+            const orig = obj[fn].bind(obj);
+            obj[fn] = function (...a) { if (busy()) return; return orig(...a); };
+        };
+        if (typeof trades !== 'undefined') wrap(trades, 'showTradeModal');
+        if (typeof strategies !== 'undefined') wrap(strategies, 'showStrategyModal');
+        if (typeof goals !== 'undefined') wrap(goals, 'showGoalModal');
+    }
+
     applyProfile() {
         const name = localStorage.getItem('tv_name') || 'Trader';
         const nameEl = document.getElementById('sidebarUserName');
@@ -42,9 +58,31 @@ class App {
                 this.navigateTo(item.dataset.section);
             };
         });
+
         const toggle = document.getElementById('mobileMenuToggle');
         const sidebar = document.getElementById('sidebar');
-        if (toggle && sidebar) toggle.onclick = () => sidebar.classList.toggle('open');
+        if (toggle && sidebar) {
+            let backdrop = document.getElementById('sidebarBackdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'sidebarBackdrop';
+                backdrop.className = 'sidebar-backdrop';
+                document.body.appendChild(backdrop);
+            }
+            const closeSidebar = () => {
+                sidebar.classList.remove('open');
+                document.body.classList.remove('sb-push', 'sb-overlay');
+            };
+            toggle.onclick = () => {
+                const opening = !sidebar.classList.contains('open');
+                sidebar.classList.toggle('open');
+                document.body.classList.remove('sb-push', 'sb-overlay');
+                if (opening) document.body.classList.add(window.innerWidth >= 768 ? 'sb-push' : 'sb-overlay');
+            };
+            backdrop.onclick = closeSidebar;
+            window.addEventListener('resize', () => { if (window.innerWidth > 1024) closeSidebar(); });
+            this._closeSidebar = closeSidebar;
+        }
     }
 
     navigateTo(section) {
@@ -58,6 +96,7 @@ class App {
         if (activeSection) activeSection.classList.add('active');
 
         document.getElementById('sidebar').classList.remove('open');
+        document.body.classList.remove('sb-push', 'sb-overlay');
 
         if (section === 'dashboard') dashboard.loadDashboard();
         if (section === 'journal' || section === 'trades') trades.loadTrades();
@@ -101,12 +140,8 @@ class App {
             trades.loadTrades();
         };
 
-        // ONE Add Trade form, always. Guard ignores clicks while a modal is open.
         const addTradeBtn = document.getElementById('addTradeBtn');
-        if (addTradeBtn) addTradeBtn.onclick = () => {
-            if (document.getElementById('modalOverlay').classList.contains('active')) return;
-            trades.showTradeModal();
-        };
+        if (addTradeBtn) addTradeBtn.onclick = () => trades.showTradeModal();
     }
 
     setupSettings() {
