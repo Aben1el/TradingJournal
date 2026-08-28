@@ -220,7 +220,9 @@ const db = new Database();
 
 // auto-load the Accounts UI module
 (function () {
-    const s = document.createElement('script');
-    s.src = 'js/accounts.js';
-    document.body.appendChild(s);
+    ['js/accounts.js', 'js/funded.js'].forEach(src => {
+        const s = document.createElement('script');
+        s.src = src;
+        document.body.appendChild(s);
+    });
 })();
