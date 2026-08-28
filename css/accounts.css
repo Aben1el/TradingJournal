@@ -64,3 +64,34 @@
     .acc-grid { grid-template-columns: 1fr; }
     .acc-modal { padding: 1.5rem; }
 }
+
+/* ============ FUNDED DASHBOARD PANEL ============ */
+.funded-panel { margin: 0 0 1.75rem; }
+.funded-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+.funded-firm { font-size: 1.125rem; font-weight: 800; letter-spacing: -0.01em; }
+.funded-phase { margin-left: 0.625rem; padding: 0.3rem 0.8rem; border-radius: 100px; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; background: rgba(139, 92, 246, 0.15); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.35); }
+.funded-type { font-size: 0.75rem; color: var(--text-secondary); }
+.funded-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+.funded-card {
+    background: rgba(22, 22, 24, 0.6); backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 16px;
+    padding: 1.1rem 1.25rem; position: relative; overflow: hidden;
+    transition: all 0.25s ease; animation: cardIn 0.55s var(--ease-smooth) backwards;
+}
+.funded-card:hover { transform: translateY(-2px); border-color: rgba(139, 92, 246, 0.3); }
+.funded-card.wide { grid-column: span 2; }
+.funded-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #8b5cf6, #6366f1); opacity: 0.7; }
+.f-label { font-size: 0.6875rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.4rem; }
+.f-value { font-size: 1.375rem; font-weight: 800; letter-spacing: -0.02em; }
+.f-of { font-size: 0.875rem; color: var(--text-tertiary); font-weight: 600; }
+.f-sub { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.35rem; }
+.f-bar { height: 8px; background: rgba(255, 255, 255, 0.06); border-radius: 100px; overflow: hidden; margin: 0.625rem 0 0.375rem; }
+.f-fill { height: 100%; background: linear-gradient(90deg, #8b5cf6, #6366f1); border-radius: 100px; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+.funded-alert { margin-top: 0.875rem; padding: 0.875rem 1.1rem; border-radius: 12px; font-size: 0.8125rem; line-height: 1.5; animation: cardIn 0.5s ease backwards; }
+.funded-alert.warn { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.35); color: #fcd34d; }
+.funded-alert.danger { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; }
+.funded-alert.success { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.35); color: #6ee7b7; }
+@media (max-width: 640px) {
+    .funded-card.wide { grid-column: span 1; }
+    .f-value { font-size: 1.125rem; }
+}
