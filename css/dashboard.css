@@ -199,3 +199,12 @@
     .recent-meta { max-width: 170px; }
     .month-label { min-width: 110px; font-size: 0.8125rem; }
 }
+
+/* ============ CHART LAYOUT POLISH v2 ============ */
+.analytics-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 1.5rem; }
+.analytics-grid .chart-container { height: 340px; }
+.chart-container h3 { font-size: 0.9375rem; font-weight: 600; color: #d6d6de; letter-spacing: -0.01em; }
+@media (max-width: 900px) {
+    .analytics-grid { grid-template-columns: 1fr !important; }
+    .analytics-grid .chart-container { height: 300px; }
+}
