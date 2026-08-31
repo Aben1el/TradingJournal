@@ -511,3 +511,21 @@ body {
     body.sb-push .sidebar { box-shadow: 24px 0 60px rgba(0, 0, 0, 0.45); }
     body.sb-overlay .sidebar-backdrop { opacity: 1; pointer-events: auto; }
 }
+
+/* ============ PROFESSIONAL FEATURE ICONS ============ */
+.feature-icon {
+    width: 46px; height: 46px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    color: #a78bfa;
+    font-size: 0;
+    margin-bottom: 1.1rem;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.feature-icon svg { width: 22px; height: 22px; }
+.feature-card:hover .feature-icon {
+    transform: translateY(-2px) scale(1.05);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.18));
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
+}
