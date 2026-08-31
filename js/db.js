@@ -220,7 +220,7 @@ const db = new Database();
 
 // auto-load the Accounts UI module
 (function () {
-    ['js/accounts.js', 'js/funded.js', 'js/calendar.js'].forEach(src => {
+    ['js/accounts.js', 'js/funded.js', 'js/calendar.js', 'js/polish.js'].forEach(src => {
         const s = document.createElement('script');
         s.src = src;
         document.body.appendChild(s);
