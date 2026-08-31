@@ -386,3 +386,62 @@ html[data-theme="light"] .stat-value.text-danger,
 html[data-theme="light"] .m-value.text-danger,
 html[data-theme="light"] .f-value.text-danger,
 html[data-theme="light"] .pstat-value.text-danger { color: #d64550; }
+
+/* ============ v6 — SOFT SILVER (#CCC FAMILY) ============ */
+html[data-theme="light"] {
+    --bg-primary: #c9ccd3; --bg-secondary: #d8dbe1; --bg-tertiary: #bfc3cb;
+    --bg-card: rgba(255, 255, 255, 0.3); --bg-glass: rgba(20, 22, 40, 0.05);
+    --text-secondary: #4a5060; --text-tertiary: #78808f;
+    --border-color: rgba(90, 100, 120, 0.35); --border-hover: rgba(70, 80, 100, 0.55);
+}
+html[data-theme="light"] body { background: linear-gradient(180deg, #d0d3da 0%, #c3c6cd 100%); }
+
+/* page backgrounds */
+html[data-theme="light"] .landing-section {
+    background: radial-gradient(ellipse 80% 60% at 75% 0%, rgba(99,102,241,0.12), transparent 60%),
+        radial-gradient(ellipse 60% 50% at 0% 100%, rgba(139,92,246,0.10), transparent 60%),
+        linear-gradient(180deg, #d0d3da 0%, #c3c6cd 100%);
+}
+html[data-theme="light"] .features-section { background: linear-gradient(to bottom, #cbced5 0%, #c0c3ca 100%); }
+html[data-theme="light"] .auth-body, html[data-theme="light"] .profile-body { background: linear-gradient(180deg, #d0d3da, #c3c6cd); }
+html[data-theme="light"] .divider-fade-top { background: linear-gradient(to bottom, #d0d3da 0%, transparent 100%); }
+html[data-theme="light"] .divider-fade-bottom { background: linear-gradient(to top, #c3c6cd 0%, transparent 100%); }
+html[data-theme="light"] .sidebar { background: rgba(226, 229, 234, 0.85); }
+
+/* cards → brushed silver, not white */
+html[data-theme="light"] .today-card, html[data-theme="light"] .stat-card, html[data-theme="light"] .chart-container,
+html[data-theme="light"] .monthly-item, html[data-theme="light"] .trade-card, html[data-theme="light"] .strategy-card,
+html[data-theme="light"] .goal-card, html[data-theme="light"] .calculator-card, html[data-theme="light"] .settings-card,
+html[data-theme="light"] .insights-container, html[data-theme="light"] .emotion-stats, html[data-theme="light"] .review-form-card,
+html[data-theme="light"] .review-item, html[data-theme="light"] .tv-cal, html[data-theme="light"] .funded-card,
+html[data-theme="light"] .profile-card, html[data-theme="light"] .edit-card, html[data-theme="light"] .pstat,
+html[data-theme="light"] .feature-card, html[data-theme="light"] .table-container {
+    background: rgba(255, 255, 255, 0.34);
+}
+
+/* smaller boxes */
+html[data-theme="light"] .tv-cal-cell, html[data-theme="light"] .emotion-item, html[data-theme="light"] .smart-insight,
+html[data-theme="light"] .calculator-result, html[data-theme="light"] .trade-detail-section, html[data-theme="light"] .band-card,
+html[data-theme="light"] .acc-type, html[data-theme="light"] .tv-cal-dow {
+    background: rgba(255, 255, 255, 0.28);
+}
+html[data-theme="light"] .tv-cal-cell.win { background: linear-gradient(150deg, #2ebd85, #1f8a5c); }
+html[data-theme="light"] .tv-cal-cell.loss { background: linear-gradient(150deg, #e5536b, #b23a48); }
+
+/* inputs & controls */
+html[data-theme="light"] .form-control, html[data-theme="light"] .search-input, html[data-theme="light"] .filter-select { background: rgba(255, 255, 255, 0.45); }
+html[data-theme="light"] .btn-secondary, html[data-theme="light"] .filter-btn, html[data-theme="light"] .month-btn,
+html[data-theme="light"] .tv-cal-btn, html[data-theme="light"] .table-action-btn, html[data-theme="light"] .profile-back,
+html[data-theme="light"] .back-btn, html[data-theme="light"] .mobile-menu-toggle, html[data-theme="light"] .nav-btn-menu,
+html[data-theme="light"] .tv-theme-btn { background: rgba(255, 255, 255, 0.4); }
+
+/* chrome */
+html[data-theme="light"] .landing-navbar { background: linear-gradient(135deg, rgba(255,255,255,0.5), rgba(195,200,210,0.42)); }
+html[data-theme="light"] .navbar-menu-dropdown, html[data-theme="light"] .acc-menu { background: rgba(232, 234, 239, 0.97); }
+html[data-theme="light"] .modal { background: #e9ebf0; }
+html[data-theme="light"] .toast { background: #e9ebf0; }
+html[data-theme="light"] .auth-card { background: rgba(255, 255, 255, 0.5); }
+html[data-theme="light"] .acc-modal { background: #e9ebf0; }
+html[data-theme="light"] .scroll-card { background: #dfe2e8; }
+html[data-theme="light"] .trades-table thead { background: rgba(20, 22, 40, 0.06); }
+html[data-theme="light"] .trades-table tbody tr:hover { background: rgba(255, 255, 255, 0.35); }
