@@ -8,13 +8,22 @@ const tvConfigured =
 let tvClient = null;
 window.tvClient = null;
 
+// ---- THEME: apply saved theme instantly (no flash) ----
+(function () {
+    const t = localStorage.getItem('tv_theme') || 'dark';
+    document.documentElement.dataset.theme = t;
+    const s = document.createElement('script');
+    s.src = 'js/theme.js';
+    document.body.appendChild(s);
+})();
+
 function tvBootClient() {
   if (tvClient || !window.supabase || !tvConfigured) return;
   try {
     tvClient = window.supabase.createClient(TV_SUPABASE_URL, TV_SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true }
     });
-    window.tvClient = tvClient;   // ← THE FIX
+    window.tvClient = tvClient;
     window.dispatchEvent(new Event('tv-client-ready'));
   } catch (e) { console.warn('Supabase client error', e); }
 }
