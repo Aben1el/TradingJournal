@@ -1,4 +1,4 @@
-// Dashboard Module — professional chart system
+// Dashboard Module — professional chart system v2
 
 const CHART_COLORS = {
     green: '#2ebd85',
@@ -8,6 +8,28 @@ const CHART_COLORS = {
     indigo: ['#7c7ff2', '#9aa0f5', '#6f74e8', '#8b5cf6', '#a78bfa', '#5f64d6']
 };
 
+// Draws win-rate % in the middle of the doughnut
+const centerTextPlugin = {
+    id: 'centerText',
+    afterDraw(chart) {
+        if (chart.config.type !== 'doughnut') return;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta.data.length) return;
+        const { ctx } = chart;
+        const x = meta.data[0].x, y = meta.data[0].y;
+        const data = chart.data.datasets[0].data;
+        const total = data.reduce((a, b) => a + b, 0);
+        const pct = total ? Math.round(((data[0] || 0) / total) * 100) : 0;
+        ctx.save();
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = "800 22px Inter, sans-serif"; ctx.fillStyle = '#ffffff';
+        ctx.fillText(pct + '%', x, y - 8);
+        ctx.font = "600 9px Inter, sans-serif"; ctx.fillStyle = '#8a8a93';
+        ctx.fillText('WIN RATE', x, y + 12);
+        ctx.restore();
+    }
+};
+
 class Dashboard {
     constructor() {
         this.currentFilter = 'all';
@@ -15,10 +37,9 @@ class Dashboard {
         this.analyticsCharts = {};
         this.viewMonth = getMonthKey(new Date());
 
-        // Global chart typography
         Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
         Chart.defaults.color = '#8a8a93';
-        Chart.defaults.animation.duration = 800;
+        Chart.defaults.animation.duration = 900;
         Chart.defaults.animation.easing = 'easeOutQuart';
 
         this._bindMonthNav();
@@ -33,50 +54,48 @@ class Dashboard {
         if (next) next.onclick = () => { this.viewMonth = shiftMonthKey(this.viewMonth, 1); this._refreshMonthly(); };
     }
 
-    // ---- shared chart styling helpers ----
-    _tooltip(money = true) {
+    // ---------- shared chart helpers ----------
+    _tooltip(money = true, horizontal = false) {
         return {
             backgroundColor: 'rgba(18, 18, 22, 0.95)',
-            titleColor: '#ffffff',
-            bodyColor: '#c9c9d1',
-            borderColor: 'rgba(255, 255, 255, 0.08)',
-            borderWidth: 1,
-            padding: 12,
-            cornerRadius: 10,
-            displayColors: false,
-            titleFont: { size: 12, weight: '600' },
-            bodyFont: { size: 12 },
-            callbacks: money ? { label: c => ' ' + formatCurrency(c.parsed.y !== undefined ? c.parsed.y : c.parsed.x) } : {}
+            titleColor: '#ffffff', bodyColor: '#c9c9d1',
+            borderColor: 'rgba(255, 255, 255, 0.08)', borderWidth: 1,
+            padding: 12, cornerRadius: 10, displayColors: false,
+            titleFont: { size: 12, weight: '600' }, bodyFont: { size: 12 },
+            callbacks: money ? { label: c => ' ' + formatCurrency(horizontal ? c.parsed.x : c.parsed.y) } : {}
         };
     }
 
-    _axes(money = true, maxTicks = 6) {
-        return {
-            x: {
-                grid: { display: false },
-                border: { display: false },
-                ticks: { color: '#8a8a93', font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }
+    _bar(ctx, { labels, data, colors, horizontal = false, money = true, allLabels = false }) {
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    data, backgroundColor: colors,
+                    borderRadius: 8, borderSkipped: false,
+                    maxBarThickness: horizontal ? 34 : 46,
+                    categoryPercentage: 0.7, barPercentage: 0.9
+                }]
             },
-            y: {
-                grid: { color: 'rgba(255, 255, 255, 0.04)' },
-                border: { display: false },
-                ticks: {
-                    color: '#8a8a93', font: { size: 10 }, maxTicksLimit: maxTicks,
-                    callback: money ? (v => '$' + v) : undefined
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                indexAxis: horizontal ? 'y' : 'x',
+                plugins: { legend: { display: false }, tooltip: this._tooltip(money, horizontal) },
+                scales: horizontal ? {
+                    x: { grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }, ticks: { color: '#8a8a93', font: { size: 10 }, callback: v => '$' + v, maxTicksLimit: 6 } },
+                    y: { grid: { display: false }, border: { display: false }, ticks: { color: '#a0a0a8', font: { size: 11 } } }
+                } : {
+                    x: { grid: { display: false }, border: { display: false }, ticks: { color: '#8a8a93', font: { size: 10 }, maxRotation: 0, autoSkip: !allLabels } },
+                    y: { grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }, ticks: { color: '#8a8a93', font: { size: 10 }, maxTicksLimit: 5, callback: v => '$' + v } }
                 }
             }
-        };
-    }
-
-    _legend() {
-        return {
-            position: 'bottom',
-            labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, boxHeight: 6, padding: 16, color: '#a0a0a0', font: { size: 11 } }
-        };
+        });
     }
 
     _signColors(values) { return values.map(v => v >= 0 ? CHART_COLORS.green : CHART_COLORS.red); }
 
+    // ---------- page rendering ----------
     async loadDashboard() {
         const trades = await db.getAllTrades();
         const filtered = analytics.filterTradesByDate(trades, this.currentFilter);
@@ -100,26 +119,10 @@ class Dashboard {
         const s = analytics.getTodayStats(trades);
         const starting = parseFloat(localStorage.getItem('tv_starting_balance')) || 10000;
         el.innerHTML = `
-            <div class="today-card">
-                <div class="today-label">Today's P&L</div>
-                <div class="today-value ${s.todayPL >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(s.todayPL)}</div>
-                <div class="today-sub">${s.todayTrades} ${s.todayTrades === 1 ? 'trade' : 'trades'} today</div>
-            </div>
-            <div class="today-card">
-                <div class="today-label">Current Balance</div>
-                <div class="today-value">${formatCurrency(s.currentBalance)}</div>
-                <div class="today-sub">Starting: ${formatCurrency(starting)}</div>
-            </div>
-            <div class="today-card">
-                <div class="today-label">Total P&L</div>
-                <div class="today-value ${s.totalPL >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(s.totalPL)}</div>
-                <div class="today-sub">All time</div>
-            </div>
-            <div class="today-card">
-                <div class="today-label">Trading Streak</div>
-                <div class="today-value ${s.streak.type === 'win' ? 'text-success' : s.streak.type === 'loss' ? 'text-danger' : ''}">${s.streak.count}${s.streak.type !== 'none' ? ' ' + s.streak.type + 's' : ''}</div>
-                <div class="today-sub">Current streak</div>
-            </div>`;
+            <div class="today-card"><div class="today-label">Today's P&L</div><div class="today-value ${s.todayPL >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(s.todayPL)}</div><div class="today-sub">${s.todayTrades} ${s.todayTrades === 1 ? 'trade' : 'trades'} today</div></div>
+            <div class="today-card"><div class="today-label">Current Balance</div><div class="today-value">${formatCurrency(s.currentBalance)}</div><div class="today-sub">Starting: ${formatCurrency(starting)}</div></div>
+            <div class="today-card"><div class="today-label">Total P&L</div><div class="today-value ${s.totalPL >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(s.totalPL)}</div><div class="today-sub">All time</div></div>
+            <div class="today-card"><div class="today-label">Trading Streak</div><div class="today-value ${s.streak.type === 'win' ? 'text-success' : s.streak.type === 'loss' ? 'text-danger' : ''}">${s.streak.count}${s.streak.type !== 'none' ? ' ' + s.streak.type + 's' : ''}</div><div class="today-sub">Current streak</div></div>`;
     }
 
     renderStats(trades) {
@@ -207,13 +210,12 @@ class Dashboard {
         el.innerHTML = analytics.getSmartInsights(trades).map(i => `<div class="smart-insight ${i.type}">${i.text}</div>`).join('');
     }
 
-    // ================= DASHBOARD CHARTS =================
+    // ---------- DASHBOARD CHARTS ----------
     renderCharts(trades) {
         Object.values(this.charts).forEach(c => c && c.destroy());
         this.charts = {};
         if (!trades || trades.length === 0) return;
 
-        // Equity Curve
         const eq = document.getElementById('equityChart');
         if (eq) {
             const ctx = eq.getContext('2d');
@@ -223,72 +225,56 @@ class Dashboard {
             gradient.addColorStop(1, 'rgba(124, 127, 242, 0)');
             this.charts.equity = new Chart(ctx, {
                 type: 'line',
-                data: { labels, datasets: [{ data, borderColor: CHART_COLORS.accent, backgroundColor: gradient, borderWidth: 2, fill: true, tension: 0.35, pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: CHART_COLORS.accent, pointHoverBorderColor: '#fff' }] },
+                data: { labels, datasets: [{ data, borderColor: CHART_COLORS.accent, backgroundColor: gradient, borderWidth: 2.5, fill: true, tension: 0.35, pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: CHART_COLORS.accent, pointHoverBorderColor: '#fff' }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     interaction: { intersect: false, mode: 'index' },
                     plugins: { legend: { display: false }, tooltip: this._tooltip() },
-                    scales: this._axes()
+                    scales: {
+                        x: { grid: { display: false }, border: { display: false }, ticks: { color: '#8a8a93', font: { size: 10 }, maxTicksLimit: 6, maxRotation: 0 } },
+                        y: { grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }, ticks: { color: '#8a8a93', font: { size: 10 }, maxTicksLimit: 5, callback: v => '$' + v } }
+                    }
                 }
             });
         }
 
-        // Win/Loss doughnut
         const wl = document.getElementById('winLossChart');
         if (wl) {
             const d = analytics.getWinLossDistribution(trades);
             this.charts.wl = new Chart(wl.getContext('2d'), {
                 type: 'doughnut',
-                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: [CHART_COLORS.green, CHART_COLORS.red, CHART_COLORS.gray], borderColor: '#141417', borderWidth: 3, hoverOffset: 8, spacing: 2 }] },
+                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: [CHART_COLORS.green, CHART_COLORS.red, CHART_COLORS.gray], borderWidth: 0, borderRadius: 6, spacing: 2, hoverOffset: 8 }] },
                 options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '72%',
-                    plugins: { legend: this._legend(), tooltip: { ...this._tooltip(false), callbacks: { label: c => ` ${c.label}: ${c.parsed} trades` } } }
-                }
+                    responsive: true, maintainAspectRatio: false, cutout: '76%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, boxHeight: 6, padding: 16, color: '#a0a0a8', font: { size: 11 } } },
+                        tooltip: { ...this._tooltip(false), callbacks: { label: c => ` ${c.label}: ${c.parsed} trades` } }
+                    }
+                },
+                plugins: [centerTextPlugin]
             });
         }
 
-        // Strategy performance
         const st = document.getElementById('strategyChart');
         if (st) {
             const d = analytics.getPerformanceByStrategy(trades);
-            this.charts.st = new Chart(st.getContext('2d'), {
-                type: 'bar',
-                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.data.map((_, i) => CHART_COLORS.indigo[i % CHART_COLORS.indigo.length]), borderRadius: 6, maxBarThickness: 42 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: this._tooltip() }, scales: this._axes() }
-            });
+            this.charts.st = this._bar(st.getContext('2d'), { labels: d.labels, data: d.data, colors: d.data.map((_, i) => CHART_COLORS.indigo[i % CHART_COLORS.indigo.length]) });
         }
 
-        // Day of week
         const dw = document.getElementById('dayOfWeekChart');
         if (dw) {
             const d = analytics.getProfitByDayOfWeek(trades);
-            this.charts.dw = new Chart(dw.getContext('2d'), {
-                type: 'bar',
-                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: this._signColors(d.data), borderRadius: 6, maxBarThickness: 32 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: this._tooltip() }, scales: this._axes() }
-            });
+            this.charts.dw = this._bar(dw.getContext('2d'), { labels: d.labels, data: d.data, colors: this._signColors(d.data), allLabels: true });
         }
 
-        // Long vs Short
         const ls = document.getElementById('longShortChart');
         if (ls) {
             const d = analytics.getLongVsShortPerformance(trades);
-            this.charts.ls = new Chart(ls.getContext('2d'), {
-                type: 'bar',
-                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: this._signColors(d.data), borderRadius: 6, maxBarThickness: 36 }] },
-                options: {
-                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-                    plugins: { legend: { display: false }, tooltip: { ...this._tooltip(), callbacks: { label: c => ' ' + formatCurrency(c.parsed.x) } } },
-                    scales: {
-                        x: { grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }, ticks: { color: '#8a8a93', font: { size: 10 }, callback: v => '$' + v } },
-                        y: { grid: { display: false }, border: { display: false }, ticks: { color: '#8a8a93', font: { size: 11 } } }
-                    }
-                }
-            });
+            this.charts.ls = this._bar(ls.getContext('2d'), { labels: d.labels, data: d.data, colors: this._signColors(d.data), horizontal: true });
         }
     }
 
-    // ================= ANALYTICS PAGE CHARTS =================
+    // ---------- ANALYTICS PAGE CHARTS ----------
     async loadAnalytics() {
         const trades = await db.getAllTrades();
         Object.values(this.analyticsCharts).forEach(c => c && c.destroy());
@@ -298,41 +284,27 @@ class Dashboard {
         const mo = document.getElementById('monthlyChart');
         if (mo) {
             const d = analytics.getMonthlyPerformance(trades);
-            this.analyticsCharts.mo = new Chart(mo.getContext('2d'), {
-                type: 'bar',
-                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: this._signColors(d.data), borderRadius: 6, maxBarThickness: 46 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: this._tooltip() }, scales: this._axes() }
-            });
+            this.analyticsCharts.mo = this._bar(mo.getContext('2d'), { labels: d.labels, data: d.data, colors: this._signColors(d.data) });
         }
-
         const dp = document.getElementById('dailyPLChart');
         if (dp) {
             const d = analytics.getDailyPL(trades);
-            this.analyticsCharts.dp = new Chart(dp.getContext('2d'), {
-                type: 'bar',
-                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: this._signColors(d.data), borderRadius: 5, maxBarThickness: 26 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: this._tooltip() }, scales: this._axes(true, 5) }
-            });
+            this.analyticsCharts.dp = this._bar(dp.getContext('2d'), { labels: d.labels, data: d.data, colors: this._signColors(d.data) });
         }
-
         const se = document.getElementById('sessionChart');
         if (se) {
             const d = analytics.getPerformanceBySession(trades);
-            this.analyticsCharts.se = new Chart(se.getContext('2d'), {
-                type: 'bar',
-                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: d.data.map((_, i) => CHART_COLORS.indigo[i % CHART_COLORS.indigo.length]), borderRadius: 6, maxBarThickness: 42 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: this._tooltip() }, scales: this._axes() }
-            });
+            this.analyticsCharts.se = this._bar(se.getContext('2d'), { labels: d.labels, data: d.data, colors: d.data.map((_, i) => CHART_COLORS.indigo[i % CHART_COLORS.indigo.length]) });
         }
-
         const rr = document.getElementById('rrDistributionChart');
         if (rr) {
             const d = analytics.getRRDistribution(trades);
-            this.analyticsCharts.rr = new Chart(rr.getContext('2d'), {
-                type: 'bar',
-                data: { labels: d.labels, datasets: [{ data: d.data, backgroundColor: CHART_COLORS.accent, borderRadius: 5, maxBarThickness: 34 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { ...this._tooltip(false), callbacks: { label: c => ` ${c.parsed.y} trades` } } }, scales: this._axes(false, 5) }
+            this.analyticsCharts.rr = this._bar(rr.getContext('2d'), {
+                labels: d.labels, data: d.data, colors: CHART_COLORS.accent, money: false,
+                allLabels: true
             });
+            // custom tooltip for counts
+            this.analyticsCharts.rr.options.plugins.tooltip.callbacks = { label: c => ` ${c.parsed.y} trades` };
         }
     }
 }
