@@ -1,0 +1,51 @@
+/* ============ P&L HEATMAP CALENDAR ============ */
+.tv-cal {
+    margin: 0 0 1.75rem;
+    background: rgba(22, 22, 24, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px; padding: 1.5rem;
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    animation: cardIn 0.55s var(--ease-smooth) backwards;
+}
+.tv-cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+.tv-cal-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; }
+.tv-cal-total { font-size: 1.25rem; font-weight: 800; }
+.tv-cal-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--bg-tertiary); border: 1px solid var(--border-color);
+    color: var(--text-primary); cursor: pointer; transition: all 0.2s ease; font-size: 0.875rem;
+}
+.tv-cal-btn:hover { background: var(--bg-glass); border-color: var(--border-hover); transform: translateY(-1px); }
+
+.tv-cal-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+.tv-cal-dow {
+    background: rgba(255, 255, 255, 0.03); border-radius: 10px;
+    padding: 0.6rem 0.25rem; text-align: center;
+    font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);
+}
+.tv-cal-cell {
+    min-height: 76px; border-radius: 10px;
+    background: #141419; border: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 0.5rem 0.6rem;
+    display: flex; flex-direction: column; justify-content: space-between;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.tv-cal-cell:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
+.tv-cal-day { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
+.tv-cal-pl { font-size: 0.8125rem; font-weight: 800; color: #fff; }
+.tv-cal-n { font-size: 0.656rem; color: rgba(255, 255, 255, 0.55); }
+
+.tv-cal-cell.win { background: linear-gradient(145deg, #1f8a5c, #14603f); border-color: rgba(46, 189, 133, 0.35); }
+.tv-cal-cell.loss { background: linear-gradient(145deg, #8a2f3a, #6d2530); border-color: rgba(229, 72, 77, 0.35); }
+.tv-cal-cell.empty { background: transparent; border-color: transparent; pointer-events: none; }
+.tv-cal-cell.future { opacity: 0.35; }
+.tv-cal-cell.week { justify-content: center; align-items: flex-end; text-align: right; }
+
+@media (max-width: 900px) {
+    .tv-cal { padding: 1rem; }
+    .tv-cal-grid { gap: 4px; }
+    .tv-cal-cell { min-height: 58px; padding: 0.35rem 0.4rem; }
+    .tv-cal-pl { font-size: 0.65rem; }
+    .tv-cal-n { display: none; }
+    .tv-cal-dow { font-size: 0.6rem; padding: 0.4rem 0; }
+}
