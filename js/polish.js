@@ -3,6 +3,9 @@
     const st = document.createElement('style');
     st.textContent = `
         ::selection { background: rgba(99, 102, 241, 0.35); }
+        /* ONE modal visible — forever */
+        .modal-overlay { flex-direction: column !important; }
+        .modal-overlay > .modal:not(:last-child) { display: none !important; }
         .tv-progress { position: fixed; top: 0; left: 0; height: 3px; width: 0; z-index: 500;
             background: linear-gradient(90deg, #6366f1, #8b5cf6);
             box-shadow: 0 0 12px rgba(99,102,241,.6); }
@@ -21,6 +24,23 @@
     document.head.appendChild(st);
 
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // ---- 0. ONE modal at a time (guards EVERY opener) ----
+    const busy = () => {
+        const o = document.getElementById('modalOverlay');
+        return o && (o.classList.contains('active') || o.children.length > 0);
+    };
+    function guard(obj, fn) {
+        if (!obj || obj['__tv_' + fn]) return;
+        obj['__tv_' + fn] = true;
+        const orig = obj[fn].bind(obj);
+        obj[fn] = function (...a) { if (busy()) return; return orig(...a); };
+    }
+    function guardAll() {
+        if (typeof trades !== 'undefined') { guard(trades, 'showTradeDetail'); guard(trades, 'showTradeModal'); }
+        if (typeof strategies !== 'undefined') guard(strategies, 'showStrategyModal');
+        if (typeof goals !== 'undefined') guard(goals, 'showGoalModal');
+    }
 
     // ---- 1. scroll progress (landing) ----
     if (document.getElementById('landing-page')) {
@@ -114,7 +134,7 @@
             };
         }
     }
-    function boot() { hookDash(); runCountUps(); }
+    function boot() { guardAll(); hookDash(); runCountUps(); }
     if (document.readyState === 'complete') boot();
     else addEventListener('load', boot);
 
