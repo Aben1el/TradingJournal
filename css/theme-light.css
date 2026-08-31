@@ -369,3 +369,20 @@ html[data-theme="light"] .recent-meta { color: #596070; }
     from { opacity: 0; transform: translateY(22px) scale(0.98); }
     to { opacity: 1; transform: none; }
 }
+
+/* ============ v5 — GREEN / RED BACK IN LIGHT MODE ============ */
+html[data-theme="light"] .text-success { color: #0a9970; }
+html[data-theme="light"] .text-danger { color: #d64550; }
+html[data-theme="light"] .text-warning { color: #b45309; }
+
+/* make sure value cells keep the semantic color */
+html[data-theme="light"] .today-value.text-success,
+html[data-theme="light"] .stat-value.text-success,
+html[data-theme="light"] .m-value.text-success,
+html[data-theme="light"] .f-value.text-success,
+html[data-theme="light"] .pstat-value.text-success { color: #0a9970; }
+html[data-theme="light"] .today-value.text-danger,
+html[data-theme="light"] .stat-value.text-danger,
+html[data-theme="light"] .m-value.text-danger,
+html[data-theme="light"] .f-value.text-danger,
+html[data-theme="light"] .pstat-value.text-danger { color: #d64550; }
