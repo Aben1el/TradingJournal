@@ -25,7 +25,6 @@
     `;
     document.head.appendChild(st);
 
-    // ---------- scorecard ----------
     async function scorecard() {
         const dash = document.getElementById('dashboard');
         const main = document.getElementById('mainContent');
@@ -74,7 +73,6 @@
         if (today) today.before(card); else dash.querySelector('.dash-header').after(card);
     }
 
-    // ---------- shortcuts sheet ----------
     let keysBox = null;
     function openKeys() {
         if (keysBox) return;
@@ -88,7 +86,7 @@
             <div class="tv-key-row"><span>This cheat-sheet</span><kbd>?</kbd></div>
             <div class="tv-key-row"><span>Close any overlay</span><kbd>Esc</kbd></div>
         </div>`;
-        keysBox.onclick = e => { if (e.target === keysBox) keysBox.remove(), keysBox = null; };
+        keysBox.onclick = e => { if (e.target === keysBox) { keysBox.remove(); keysBox = null; } };
         document.body.appendChild(keysBox);
     }
     document.addEventListener('keydown', (e) => {
