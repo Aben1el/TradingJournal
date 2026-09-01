@@ -72,12 +72,9 @@ void Sync() {
       string headers = "apikey: " + TV_Key + "\\r\\nContent-Type: application/json\\r\\nPrefer: return=minimal\\r\\n";
       char res[]; string h;
       int code = WebRequest(TV_Url, headers, 15000, data, res, h);
-      if (code == 201 || code == 200) from = (datetime)HistoryDealGetInteger(t, DEAL_TIME);
+            if (code == 201 || code == 200) from = (datetime)HistoryDealGetInteger(t, DEAL_TIME) + 1;
    }
-   from = TimeCurrent() - 3600;
 }
-//+------------------------------------------------------------------+`;
-    }
 
     async function buildConnections() {
         await wait();
