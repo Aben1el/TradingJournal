@@ -1,4 +1,4 @@
-// ============ TradeVault Next Level ============
+// ============ TradeVault Next Level v2 ============
 (function () {
     const st = document.createElement('style');
     st.textContent = `
@@ -6,6 +6,12 @@
         .conn-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
         .conn-status { display: flex; flex-direction: column; gap: .4rem; margin-top: .9rem; font-size: .78rem; color: var(--text-secondary); }
         .conn-status .ok { color: #2ebd85; } .conn-status .wait { color: #f59e0b; }
+        .onb-card { margin: 0 0 1.5rem; padding: 1.25rem 1.5rem; border-radius: 14px; border: 1px solid rgba(99,102,241,.35); background: linear-gradient(90deg, rgba(99,102,241,.12), rgba(139,92,246,.06)); animation: cardIn .5s ease backwards; }
+        .onb-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .6rem; }
+        .onb-head strong { font-size: .95rem; }
+        #onbX { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: .9rem; }
+        .onb-step { padding: .3rem 0; font-size: .85rem; color: var(--text-secondary); }
+        .onb-step.done { color: #2ebd85; text-decoration: line-through; opacity: .8; }
     `;
     document.head.appendChild(st);
 
@@ -57,11 +63,11 @@ void Sync() {
                     + HistoryDealGetDouble(t, DEAL_SWAP)
                     + HistoryDealGetDouble(t, DEAL_COMMISSION);
       string dir = (HistoryDealGetInteger(t, DEAL_TYPE) == DEAL_TYPE_SELL) ? "long" : "short";
-      string body = "{\"token\":\"" + TV_Token + "\","
-         + "\"symbol\":\"" + HistoryDealGetString(t, DEAL_SYMBOL) + "\","
-         + "\"direction\":\"" + dir + "\","
-         + "\"profit\":" + DoubleToString(profit, 2) + ","
-         + "\"closed_at\":" + IntegerToString((long)HistoryDealGetInteger(t, DEAL_TIME)) + "}";
+      string body = "{\\"token\\":\\"" + TV_Token + "\\","
+         + "\\"symbol\\":\\"" + HistoryDealGetString(t, DEAL_SYMBOL) + "\\","
+         + "\\"direction\\":\\"" + dir + "\\","
+         + "\\"profit\\":" + DoubleToString(profit, 2) + ","
+         + "\\"closed_at\\":" + IntegerToString((long)HistoryDealGetInteger(t, DEAL_TIME)) + "}";
       char data[]; StringToCharArray(body, data, 0, StringLen(body), CP_UTF8);
       string headers = "apikey: " + TV_Key + "\\r\\nContent-Type: application/json\\r\\nPrefer: return=minimal\\r\\n";
       char res[]; string h;
@@ -77,6 +83,13 @@ void Sync() {
         await wait();
         const grid = document.querySelector('#settings .settings-grid');
         if (!grid || document.getElementById('connCard') || !window.tvClient) return;
+
+        // remove the old static architecture card (no duplicates)
+        document.querySelectorAll('.broker-status').forEach(el => {
+            const c = el.closest('.settings-card');
+            if (c && c.id !== 'connCard') c.remove();
+        });
+
         const key = await getKey();
         if (!key) return;
 
@@ -145,7 +158,7 @@ void Sync() {
         };
     }
 
-    // ================= 2. TWO NEW CALCULATORS =================
+    // ================= 2. CALCULATORS =================
     function buildCalcs() {
         const grid = document.querySelector('.calculators-grid');
         if (!grid || grid.dataset.tvx) return;
@@ -186,7 +199,7 @@ void Sync() {
         };
     }
 
-    // ================= 3. DEEPER SMART INSIGHTS =================
+    // ================= 3. DEEPER INSIGHTS =================
     function deepenInsights() {
         if (typeof analytics === 'undefined' || analytics.__deep) return;
         analytics.__deep = true;
@@ -195,7 +208,6 @@ void Sync() {
             const out = orig(trades);
             if (!trades || trades.length < 6) return out;
 
-            // best vs worst session
             const sess = {};
             trades.forEach(t => { if (t.session) { sess[t.session] = sess[t.session] || { n: 0, w: 0 }; sess[t.session].n++; if (t.profitLoss > 0) sess[t.session].w++; } });
             const se = Object.entries(sess).filter(([, v]) => v.n >= 3).map(([k, v]) => [k, v.w / v.n]);
@@ -205,7 +217,6 @@ void Sync() {
                 if (diff >= 10) out.push({ type: 'success', text: `Your win rate is ${diff}% higher during ${se[0][0]}-session trades than ${se[se.length - 1][0]}.` });
             }
 
-            // overtrading
             const days = {};
             trades.forEach(t => { const k = String(t.entryDate).split('T')[0]; days[k] = days[k] || { n: 0, pl: 0 }; days[k].n++; days[k].pl += t.profitLoss; });
             const heavy = Object.values(days).filter(d => d.n >= 5);
@@ -216,7 +227,6 @@ void Sync() {
                 if (avgHeavy < avgLight) out.push({ type: 'warning', text: `On days with 5+ trades you average ${formatCurrency(avgHeavy)} per trade vs ${formatCurrency(avgLight)} on lighter days — possible overtrading.` });
             }
 
-            // long vs short edge
             const ls = { long: { n: 0, w: 0 }, short: { n: 0, w: 0 } };
             trades.forEach(t => { if (ls[t.direction]) { ls[t.direction].n++; if (t.profitLoss > 0) ls[t.direction].w++; } });
             if (ls.long.n >= 3 && ls.short.n >= 3) {
@@ -224,7 +234,6 @@ void Sync() {
                 if (Math.abs(dl) >= 10) out.push({ type: 'info', text: `You win ${Math.abs(dl)}% more often on ${dl > 0 ? 'longs' : 'shorts'}. Consider sizing that side with more confidence.` });
             }
 
-            // losing streak caution
             const sorted = [...trades].sort((a, b) => new Date(a.entryDate) - new Date(b.entryDate));
             let maxL = 0, cur = 0;
             sorted.forEach(t => { cur = t.profitLoss < 0 ? cur + 1 : 0; maxL = Math.max(maxL, cur); });
@@ -234,7 +243,108 @@ void Sync() {
         };
     }
 
-    function boot() { buildConnections(); buildCalcs(); deepenInsights(); }
+    // ================= 4. ONBOARDING CHECKLIST =================
+    async function buildOnboarding() {
+        await wait();
+        const dash = document.getElementById('dashboard');
+        const main = document.getElementById('mainContent');
+        if (!dash || !window.tvClient || document.getElementById('onbCard')) return;
+        if (localStorage.getItem('tv_onb_dismissed') === '1') return;
+        if (!(main && main.style.display === 'block')) return;
+
+        const [trades, reviews, accs] = await Promise.all([
+            db.getAllTrades(), db.getAllReviews(), tvClient.from('trading_accounts').select('id')
+        ]);
+        const steps = [
+            { t: 'Create your trading account', ok: (accs.data || []).length > 0 },
+            { t: 'Record your first trade', ok: trades.length > 0 },
+            { t: 'Write your first review', ok: reviews.length > 0 }
+        ];
+        if (steps.every(s => s.ok)) return;
+
+        const card = document.createElement('div');
+        card.id = 'onbCard'; card.className = 'onb-card';
+        card.innerHTML = `<div class="onb-head"><strong>🚀 Get started with TradeVault</strong><button id="onbX" title="Dismiss">✕</button></div>` +
+            steps.map(s => `<div class="onb-step ${s.ok ? 'done' : ''}">${s.ok ? '✅' : '○'} ${s.t}</div>`).join('');
+        dash.querySelector('.dash-header').after(card);
+        card.querySelector('#onbX').onclick = () => { localStorage.setItem('tv_onb_dismissed', '1'); card.remove(); };
+    }
+
+    // ================= 5. EMOTION P&L REPORT =================
+    function emotionReport() {
+        if (typeof psychology === 'undefined' || psychology.__emo) return;
+        psychology.__emo = true;
+        const orig = psychology.loadPsychology.bind(psychology);
+        psychology.loadPsychology = async function (...a) {
+            const r = await orig(...a);
+            const grid = document.querySelector('.psychology-grid');
+            if (grid && !document.getElementById('emoCard')) {
+                const trades = await db.getAllTrades();
+                const by = {};
+                trades.forEach(t => {
+                    if (t.emotionBefore) {
+                        const k = t.emotionBefore;
+                        by[k] = by[k] || { n: 0, pl: 0, w: 0 };
+                        by[k].n++; by[k].pl += t.profitLoss; if (t.profitLoss > 0) by[k].w++;
+                    }
+                });
+                const rows = Object.entries(by).sort((x, y) => y[1].pl - x[1].pl);
+                grid.insertAdjacentHTML('beforeend', `
+                    <div class="insights-container" id="emoCard">
+                        <h3>Emotion P&L Report</h3>
+                        ${rows.length ? rows.map(([k, v]) => `
+                            <div class="smart-insight ${v.pl >= 0 ? 'success' : 'danger'}">
+                                <div class="insight-text"><strong>${k}:</strong> ${v.n} trades · ${formatPercentage((v.w / v.n) * 100)} win · ${formatCurrency(v.pl)}</div>
+                            </div>`).join('')
+                        : '<div class="smart-insight info"><div class="insight-text">Tag emotions on your trades to unlock this report.</div></div>'}
+                    </div>`);
+            }
+            return r;
+        };
+    }
+
+    // ================= 6. PWA INSTALL =================
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        showInstall();
+    });
+    function showInstall() {
+        if (!deferredPrompt) return;
+        const f = document.querySelector('.sidebar-footer');
+        if (!f || document.getElementById('installBtn')) return;
+        const b = document.createElement('button');
+        b.id = 'installBtn';
+        b.className = 'btn btn-secondary';
+        b.style.cssText = 'width:100%;margin-top:.6rem;border-radius:12px;';
+        b.textContent = '📲 Install TradeVault App';
+        b.onclick = async () => { deferredPrompt.prompt(); deferredPrompt = null; b.remove(); };
+        f.appendChild(b);
+    }
+    function registerSW() {
+        if ('serviceWorker' in navigator && location.protocol === 'https:') {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+    }
+
+    // ================= BOOT =================
+    function boot() {
+        buildConnections();
+        buildCalcs();
+        deepenInsights();
+        buildOnboarding();
+        emotionReport();
+        registerSW();
+        setTimeout(showInstall, 1500);
+    }
     if (document.readyState === 'complete') setTimeout(boot, 300);
     else window.addEventListener('load', () => setTimeout(boot, 300));
+
+    // refresh onboarding when app becomes visible
+    const mc = document.getElementById('mainContent');
+    if (mc) {
+        const mo = new MutationObserver(() => { if (mc.style.display === 'block') buildOnboarding(); });
+        mo.observe(mc, { attributes: true, attributeFilter: ['style'] });
+    }
 })();
