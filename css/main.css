@@ -820,3 +820,42 @@ html[data-theme="light"] .badge-grid-wrap, html[data-theme="light"] .profile-rig
 html[data-theme="light"] .ach { background: rgba(255, 255, 255, .4); border-color: rgba(146, 156, 176, .4); }
 html[data-theme="light"] .ach .ico { background: rgba(20, 22, 40, .05); border-color: rgba(20, 22, 40, .08); }
 html[data-theme="light"] .ach.unlocked { background: linear-gradient(165deg, rgba(245, 158, 11, .14), rgba(245, 158, 11, .05)); border-color: rgba(180, 120, 10, .4); }
+
+/* ============ CONNECTIONS PANEL — PRO REDESIGN ============ */
+#connCard { grid-column: 1 / -1; }
+#connCard h3 { font-size: 1.15rem; margin-bottom: .3rem; }
+.conn-sub { color: var(--text-secondary); font-size: .85rem; margin-bottom: 1.4rem; }
+.conn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.conn-block {
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid var(--border-color);
+    border-radius: 16px; padding: 1.25rem;
+    display: flex; flex-direction: column; gap: 1rem;
+}
+.conn-block-head { display: flex; align-items: center; gap: .8rem; }
+.conn-ico { width: 40px; height: 40px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border-radius: 12px; background: rgba(99, 102, 241, .12); border: 1px solid rgba(99, 102, 241, .3); }
+.conn-block-head strong { display: block; font-size: .9rem; }
+.conn-block-head small { color: var(--text-tertiary); font-size: .7rem; }
+.conn-cred {
+    display: flex; align-items: center; gap: .6rem;
+    background: rgba(0, 0, 0, .35); border: 1px solid var(--border-color);
+    border-radius: 12px; padding: .7rem .9rem;
+}
+.conn-cred code { flex: 1; font-family: ui-monospace, monospace; font-size: .75rem; letter-spacing: .06em; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conn-mini { flex: 0 0 auto; padding: .35rem .8rem; border-radius: 100px; border: 1px solid var(--border-color); background: var(--bg-glass); color: var(--text-secondary); font-size: .7rem; font-weight: 600; cursor: pointer; transition: all .2s ease; }
+.conn-mini:hover { color: var(--text-primary); border-color: var(--border-hover); }
+.conn-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.conn-actions .btn { flex: 1 1 140px; min-height: 42px; font-size: .8rem; border-radius: 12px; }
+.conn-stat { display: flex; gap: .7rem; align-items: flex-start; }
+.conn-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex: 0 0 auto; }
+.conn-dot.ok { background: #2ebd85; box-shadow: 0 0 10px rgba(46, 189, 133, .6); }
+.conn-dot.warn { background: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, .5); }
+.conn-stat strong { font-size: .85rem; }
+.conn-stat em { font-style: normal; font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: .15rem .55rem; border-radius: 100px; margin-left: .4rem; vertical-align: 1px; }
+.conn-stat em.ok { background: rgba(46, 189, 133, .12); color: #2ebd85; border: 1px solid rgba(46, 189, 133, .35); }
+.conn-stat em.warn { background: rgba(245, 158, 11, .12); color: #fcd34d; border: 1px solid rgba(245, 158, 11, .35); }
+.conn-stat small { display: block; color: var(--text-tertiary); font-size: .72rem; margin-top: .2rem; line-height: 1.5; }
+.conn-cta { width: 100%; margin-top: auto; min-height: 46px; border-radius: 12px; }
+@media (max-width: 860px) { .conn-grid { grid-template-columns: 1fr; } }
+html[data-theme="light"] .conn-block { background: rgba(255, 255, 255, .45); border-color: rgba(146, 156, 176, .4); }
+html[data-theme="light"] .conn-cred { background: rgba(20, 22, 40, .05); }
