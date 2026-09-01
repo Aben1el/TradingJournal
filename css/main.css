@@ -668,3 +668,9 @@ html[data-theme="light"] .broker-chip { background: rgba(245,158,11,0.12); color
     .testimonials { grid-template-columns: 1fr; }
     .footer-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============ PROFILE ORDER GUARANTEE ============ */
+.profile-right { display: flex; flex-direction: column; }
+.profile-right > .stats-row { order: 1; }
+.profile-right > .edit-card { order: 2; }
+.badge-grid-wrap { order: 99; margin-top: 1.5rem; position: relative; z-index: 1; }
