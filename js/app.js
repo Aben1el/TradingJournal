@@ -1,4 +1,4 @@
-// Main Application Controller — onclick bindings (no duplicate listeners)
+// Main Application Controller — onclick bindings + collapsible sidebar
 
 class App {
     constructor() { this.currentSection = 'dashboard'; }
@@ -38,7 +38,7 @@ class App {
             const orig = obj[fn].bind(obj);
             obj[fn] = function (...a) { if (busy()) return; return orig(...a); };
         };
-        if (typeof trades !== 'undefined') wrap(trades, 'showTradeModal');
+        if (typeof trades !== 'undefined') { wrap(trades, 'showTradeModal'); wrap(trades, 'showTradeDetail'); }
         if (typeof strategies !== 'undefined') wrap(strategies, 'showStrategyModal');
         if (typeof goals !== 'undefined') wrap(goals, 'showGoalModal');
     }
@@ -57,6 +57,8 @@ class App {
                 e.preventDefault();
                 this.navigateTo(item.dataset.section);
             };
+            const s = item.querySelector('span');
+            if (s) item.title = s.textContent;
         });
 
         const toggle = document.getElementById('mobileMenuToggle');
@@ -69,20 +71,108 @@ class App {
                 backdrop.className = 'sidebar-backdrop';
                 document.body.appendChild(backdrop);
             }
-            const closeSidebar = () => {
-                sidebar.classList.remove('open');
-                document.body.classList.remove('sb-push', 'sb-overlay');
-            };
             toggle.onclick = () => {
                 const opening = !sidebar.classList.contains('open');
                 sidebar.classList.toggle('open');
                 document.body.classList.remove('sb-push', 'sb-overlay');
                 if (opening) document.body.classList.add(window.innerWidth >= 768 ? 'sb-push' : 'sb-overlay');
             };
-            backdrop.onclick = closeSidebar;
-            window.addEventListener('resize', () => { if (window.innerWidth > 1024) closeSidebar(); });
-            this._closeSidebar = closeSidebar;
+            backdrop.onclick = () => {
+                sidebar.classList.remove('open');
+                document.body.classList.remove('sb-push', 'sb-overlay');
+            };
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 1024) {
+                    sidebar.classList.remove('open');
+                    document.body.classList.remove('sb-push', 'sb-overlay');
+                }
+            });
         }
+
+        this.setupSidebarCollapse();
+    }
+
+    // ---------- collapsible icon-rail sidebar ----------
+    setupSidebarCollapse() {
+        const st = document.getElementById('sbCollapseCss');
+        if (!st) {
+            const s = document.createElement('style');
+            s.id = 'sbCollapseCss';
+            s.textContent = `
+                .sidebar { transition: width .3s cubic-bezier(.22,1,.36,1); }
+                .main-content { transition: margin-left .3s cubic-bezier(.22,1,.36,1); }
+                .sidebar-header { position: relative; }
+                .sb-head-btns { position: absolute; right: .8rem; top: 50%; transform: translateY(-50%); display: flex; gap: .4rem; z-index: 5; }
+                .sb-head-btns .tv-theme-side { position: static; transform: none; width: 32px; height: 32px; }
+                .sb-collapse-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--bg-glass);
+                    border: 1px solid var(--border-color); color: var(--text-secondary);
+                    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s ease; }
+                .sb-collapse-btn:hover { color: var(--text-primary); border-color: var(--border-hover); transform: scale(1.06); }
+                .sb-collapse-btn svg { transition: transform .3s ease; }
+
+                body.sb-collapsed .sidebar { width: 78px; }
+                body.sb-collapsed .main-content { margin-left: 78px; }
+                body.sb-collapsed .logo-text, body.sb-collapsed .nav-item span, body.sb-collapsed .user-details,
+                body.sb-collapsed .acc-current > span, body.sb-collapsed .acc-current > svg { display: none; }
+                body.sb-collapsed .sidebar-header { display: flex; flex-direction: column; align-items: center; gap: .6rem; padding: 1.1rem .5rem; }
+                body.sb-collapsed .logo { justify-content: center; }
+                body.sb-collapsed .logo-img { width: 36px; height: 36px; }
+                body.sb-collapsed .sb-head-btns { position: static; transform: none; }
+                body.sb-collapsed .sb-collapse-btn svg { transform: rotate(180deg); }
+                body.sb-collapsed .nav-item { justify-content: center; padding: .9rem 0; }
+                body.sb-collapsed .nav-item:hover { padding-left: 0; }
+                body.sb-collapsed .sidebar-nav { padding: .75rem 0; }
+                body.sb-collapsed .sidebar-footer { padding: 1rem .5rem; }
+                body.sb-collapsed .user-info { justify-content: center; }
+                body.sb-collapsed .user-avatar { width: 36px; height: 36px; }
+                body.sb-collapsed .user-avatar-img { width: 36px; height: 36px; }
+                body.sb-collapsed .acc-switcher { padding: .5rem .6rem; }
+                body.sb-collapsed .acc-current { justify-content: center; padding: .6rem; }
+                body.sb-collapsed .acc-current::before { content: '📊'; font-size: .9rem; }
+                body.sb-collapsed .acc-menu { left: 72px; right: auto; top: -6px; width: 230px; }
+
+                @media (max-width: 1024px) {
+                    .sb-collapse-btn { display: none; }
+                    body.sb-collapsed .sidebar { width: var(--sidebar-width); }
+                    body.sb-collapsed .main-content { margin-left: 0; }
+                    body.sb-collapsed .logo-text { display: inline; }
+                    body.sb-collapsed .nav-item span { display: inline; }
+                    body.sb-collapsed .user-details { display: block; }
+                    body.sb-collapsed .acc-current > span, body.sb-collapsed .acc-current > svg { display: inline; }
+                    body.sb-collapsed .acc-current::before { content: none; }
+                    body.sb-collapsed .nav-item { justify-content: flex-start; padding: .875rem 1.5rem; }
+                    body.sb-collapsed .sidebar-header { flex-direction: row; padding: 1.5rem; }
+                    body.sb-collapsed .acc-menu { left: 1rem; right: 1rem; width: auto; top: calc(100% - .4rem); }
+                }
+            `;
+            document.head.appendChild(s);
+        }
+
+        const header = document.querySelector('.sidebar-header');
+        if (!header || document.querySelector('.sb-collapse-btn')) return;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'sb-head-btns';
+        const btn = document.createElement('button');
+        btn.className = 'sb-collapse-btn';
+        btn.title = 'Collapse / expand';
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>';
+        btn.onclick = () => {
+            const c = document.body.classList.toggle('sb-collapsed');
+            localStorage.setItem('tv_sb_collapsed', c ? '1' : '');
+        };
+        wrap.appendChild(btn);
+        header.appendChild(wrap);
+
+        // pull the theme button into the same cluster (whenever it appears)
+        const pullTheme = () => {
+            const t = header.querySelector('.sidebar-header > .tv-theme-side');
+            if (t) wrap.insertBefore(t, btn);
+        };
+        pullTheme();
+        setTimeout(pullTheme, 900);
+
+        if (localStorage.getItem('tv_sb_collapsed') === '1') document.body.classList.add('sb-collapsed');
     }
 
     navigateTo(section) {
@@ -213,7 +303,7 @@ class App {
     closeModal() {
         const overlay = document.getElementById('modalOverlay');
         overlay.classList.remove('active');
-        setTimeout(() => { overlay.innerHTML = ''; }, 300);
+        overlay.innerHTML = '';
     }
 }
 
