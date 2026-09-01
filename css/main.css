@@ -689,3 +689,8 @@ html[data-theme="light"] .broker-chip { background: rgba(245,158,11,0.12); color
 
 /* streak flame */
 .streak-chip { display: inline-block; margin-left: .5rem; padding: .1rem .5rem; border-radius: 100px; background: rgba(245,158,11,.15); border: 1px solid rgba(245,158,11,.4); color: #fcd34d; font-size: .65rem; font-weight: 700; }
+
+/* ============ TAG CHIPS + DEMO EXPLORER ============ */
+.tag-chip { display: inline-block; margin-left: .4rem; padding: .05rem .5rem; border-radius: 100px; background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.35); color: #a78bfa; font-size: .6rem; font-weight: 700; letter-spacing: .03em; }
+html[data-theme="light"] .tag-chip { background: rgba(99,102,241,.1); color: #6366f1; }
+.demo-btn { margin-top: .75rem; }
