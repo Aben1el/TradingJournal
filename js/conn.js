@@ -43,7 +43,7 @@ void Sync() {
          + "\\"closed_at\\":" + IntegerToString((long)HistoryDealGetInteger(t, DEAL_TIME)) + "}";
       uchar data[]; StringToCharArray(body, data, 0, StringLen(body), CP_UTF8);
       string headers = "apikey: " + TV_Key + "\\r\\nContent-Type: application/json\\r\\nPrefer: return=minimal\\r\\n";
-      char res[]; string h;
+      uchar res[]; string h;
       int code = WebRequest(TV_Url, headers, 15000, data, res, h);
       if (code == 201 || code == 200) from = (datetime)HistoryDealGetInteger(t, DEAL_TIME) + 1;
    }
