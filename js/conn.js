@@ -1,4 +1,4 @@
-// ============ TradeVault Connections (standalone + robust) ============
+// ============ TradeVault Connections (pro panel) ============
 (function () {
     const wait = () => new Promise(r => {
         if (window.tvClient) return r();
@@ -65,7 +65,9 @@ void Sync() {
     async function build() {
         await wait();
         const grid = document.querySelector('#settings .settings-grid');
-        if (!grid || document.getElementById('connCard') || !window.tvClient) return;
+        if (!grid || !window.tvClient) return;
+        const old = document.getElementById('connCard');
+        if (old) old.remove();
         document.querySelectorAll('.broker-status').forEach(el => {
             const c = el.closest('.settings-card');
             if (c && c.id !== 'connCard') c.remove();
@@ -77,22 +79,40 @@ void Sync() {
 
         if (!key || key.__err) {
             card.innerHTML = `<h3>Broker & Platform Connections</h3>
-                <p style="color:var(--text-secondary);font-size:.8125rem;line-height:1.7;">⚠️ Sync tables not ready${key && key.__err ? ` (${key.__err})` : ''}.<br>In Supabase → SQL Editor, run the sync SQL that creates <strong>sync_keys</strong> + <strong>broker_trades</strong>, then refresh this page.</p>`;
+                <p class="conn-sub">⚠️ Sync tables not ready${key && key.__err ? ` (${key.__err})` : ''}. Run the sync SQL (sync_keys + broker_trades) in Supabase → SQL Editor, then refresh.</p>`;
         } else {
             card.innerHTML = `
                 <h3>Broker & Platform Connections</h3>
-                <div class="conn-token" id="connToken">••••••••-••••-••••-••••-••••••••••••</div>
-                <div class="conn-row">
-                    <button class="btn btn-secondary" id="connReveal">Reveal Token</button>
-                    <button class="btn btn-secondary" id="connCopy">Copy Webhook URL</button>
-                    <button class="btn btn-secondary" id="connEA">Download MT5 EA</button>
-                    <button class="btn btn-secondary" id="connRegen">Regenerate</button>
-                </div>
-                <div class="conn-row"><button class="btn btn-primary" id="connImport">Import Pending Syncs</button></div>
-                <div class="conn-status">
-                    <span class="ok">● MT5 EA sync — READY (desktop or VPS, auto-imports every 30s)</span>
-                    <span class="wait">● Phone — use VPS bridge or CSV import (apps can't run EAs)</span>
-                    <span>● CSV import — READY (Trades page)</span>
+                <p class="conn-sub">Link MetaTrader 5 once — every closed trade then syncs into TradeVault automatically.</p>
+                <div class="conn-grid">
+                    <div class="conn-block">
+                        <div class="conn-block-head">
+                            <span class="conn-ico">🔑</span>
+                            <div><strong>Connection / API Information</strong><small>Your personal secure bridge credentials</small></div>
+                        </div>
+                        <div>
+                            <small style="display:block;color:var(--text-tertiary);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">API Token — sensitive</small>
+                            <div class="conn-cred">
+                                <code id="connToken">••••••••••••••••••••••</code>
+                                <button class="conn-mini" id="connReveal">Reveal</button>
+                            </div>
+                        </div>
+                        <div class="conn-actions">
+                            <button class="btn btn-secondary" id="connCopy">Copy Webhook URL</button>
+                            <button class="btn btn-secondary" id="connEA">Download MT5 EA</button>
+                            <button class="btn btn-secondary" id="connRegen">Regenerate</button>
+                        </div>
+                    </div>
+                    <div class="conn-block">
+                        <div class="conn-block-head">
+                            <span class="conn-ico">🔄</span>
+                            <div><strong>Sync / Import</strong><small>How your trades reach TradeVault</small></div>
+                        </div>
+                        <div class="conn-stat"><span class="conn-dot ok"></span><div><strong>MT5 EA Sync</strong><em class="ok">Ready</em><small>Runs on desktop or VPS · pushes closed trades every 60s · auto-imports here every 30s.</small></div></div>
+                        <div class="conn-stat"><span class="conn-dot warn"></span><div><strong>Mobile</strong><em class="warn">VPS / CSV</em><small>Phone apps can't run EAs — keep the EA on a VPS, or import manually via CSV.</small></div></div>
+                        <div class="conn-stat"><span class="conn-dot ok"></span><div><strong>CSV Import</strong><em class="ok">Ready</em><small>Trades page → Import CSV (Exness, MT4/5, any broker).</small></div></div>
+                        <button class="btn btn-primary conn-cta" id="connImport">⚡ Import Pending Syncs</button>
+                    </div>
                 </div>`;
         }
         grid.children[1] ? grid.insertBefore(card, grid.children[1]) : grid.appendChild(card);
@@ -101,8 +121,8 @@ void Sync() {
         let revealed = false;
         card.querySelector('#connReveal').onclick = (e) => {
             revealed = !revealed;
-            card.querySelector('#connToken').textContent = revealed ? key.token : '••••••••-••••-••••-••••-••••••••••••';
-            e.target.textContent = revealed ? 'Hide Token' : 'Reveal Token';
+            card.querySelector('#connToken').textContent = revealed ? key.token : '••••••••••••••••••••••';
+            e.target.textContent = revealed ? 'Hide' : 'Reveal';
         };
         card.querySelector('#connCopy').onclick = () => {
             navigator.clipboard.writeText(`${TV_SUPABASE_URL}/rest/v1/broker_trades  (token: ${key.token})`);
@@ -114,7 +134,7 @@ void Sync() {
             a.href = URL.createObjectURL(blob);
             a.download = 'TradeVaultSync.mq5';
             a.click();
-            showToast('EA downloaded — compile in MetaEditor, attach to a chart');
+            showToast('EA downloaded ✅');
         };
         card.querySelector('#connRegen').onclick = async () => {
             const newToken = crypto.randomUUID();
@@ -122,6 +142,7 @@ void Sync() {
             if (error) return showToast('Error: ' + error.message, 'error');
             key.token = newToken; revealed = true;
             card.querySelector('#connToken').textContent = newToken;
+            card.querySelector('#connReveal').textContent = 'Hide';
             showToast('Token regenerated — re-download the EA');
         };
         card.querySelector('#connImport').onclick = async () => {
