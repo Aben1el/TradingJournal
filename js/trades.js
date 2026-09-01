@@ -1,5 +1,11 @@
 // Trades Module — CRUD, filters, screenshots + CSV import/export
 
+(function () {
+    const s = document.createElement('style');
+    s.textContent = '.modal-overlay>.modal:not(:last-child){display:none!important}';
+    document.head.appendChild(s);
+})();
+
 // ---------- CSV helpers ----------
 function tradesToCSV(trades) {
     const headers = ['entryDate','symbol','market','direction','entryPrice','exitPrice','stopLoss','positionSize','profitLoss','rMultiple','strategy','session','emotionBefore','discipline','confidence','notes'];
@@ -61,6 +67,16 @@ class Trades {
         this.itemsPerPage = 20;
         this.filters = { search: '', asset: '', strategy: '', result: '', direction: '' };
         this.setupCSVButtons();
+    }
+
+    // ONE modal at a time — hard stop
+    _modalBusy() {
+        const ov = document.getElementById('modalOverlay');
+        return ov && ov.classList.contains('active');
+    }
+    _modalReset() {
+        const ov = document.getElementById('modalOverlay');
+        if (ov) ov.innerHTML = '';
     }
 
     // Auto-injects Export/Import CSV buttons (no HTML change needed)
@@ -254,6 +270,8 @@ class Trades {
     }
 
     async showTradeModal(tradeId = null) {
+        if (this._modalBusy()) return;               // ← hard stop
+        this._modalReset();                          // ← clean slate
         const overlay = document.getElementById('modalOverlay');
         let trade = tradeId ? await db.getTrade(tradeId) : null;
         const strategies = await db.getAllStrategies();
@@ -367,7 +385,17 @@ class Trades {
         }
     }
 
+    // Edit straight from the detail view (no ghost modals)
+    editFromDetail(id) {
+        const o = document.getElementById('modalOverlay');
+        o.classList.remove('active');
+        o.innerHTML = '';
+        this.showTradeModal(id);
+    }
+
     async showTradeDetail(id) {
+        if (this._modalBusy()) return;               // ← hard stop
+        this._modalReset();
         const trade = await db.getTrade(id);
         if (!trade) return;
 
@@ -419,7 +447,7 @@ class Trades {
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="app.closeModal()">Close</button>
-                <button class="btn btn-primary" onclick="app.closeModal(); trades.showTradeModal(${trade.id})">Edit Trade</button>
+                <button class="btn btn-primary" onclick="trades.editFromDetail(${trade.id})">Edit Trade</button>
             </div>
         `;
         overlay.appendChild(modal);
@@ -428,3 +456,14 @@ class Trades {
 }
 
 const trades = new Trades();
+
+// Instant, ghost-free closeModal (overrides the delayed version)
+window.addEventListener('load', () => {
+    if (typeof app !== 'undefined') {
+        app.closeModal = function () {
+            const overlay = document.getElementById('modalOverlay');
+            overlay.classList.remove('active');
+            overlay.innerHTML = '';
+        };
+    }
+});
