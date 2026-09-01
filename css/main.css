@@ -859,3 +859,25 @@ html[data-theme="light"] .ach.unlocked { background: linear-gradient(165deg, rgb
 @media (max-width: 860px) { .conn-grid { grid-template-columns: 1fr; } }
 html[data-theme="light"] .conn-block { background: rgba(255, 255, 255, .45); border-color: rgba(146, 156, 176, .4); }
 html[data-theme="light"] .conn-cred { background: rgba(20, 22, 40, .05); }
+
+/* ============ COLLAPSED SIDEBAR: sync pill = dot only ============ */
+body.sb-collapsed .sync-pill {
+    font-size: 0; justify-content: center; align-items: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    margin: .6rem auto 0; padding: 0;
+}
+body.sb-collapsed .sync-pill .dot { margin: 0; }
+
+/* stat hints + mobile FAB */
+.stat-card[title], .today-card[title] { cursor: help; }
+.tv-fab {
+    position: fixed; bottom: 5rem; right: 1.25rem; z-index: 96;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--accent-gradient); color: #fff; border: none;
+    font-size: 1.6rem; font-weight: 700;
+    display: none; align-items: center; justify-content: center;
+    box-shadow: 0 10px 30px rgba(99, 102, 241, .45);
+    transition: transform .2s ease;
+}
+.tv-fab:active { transform: scale(.92); }
+@media (max-width: 768px) { .tv-fab { display: flex; } }
