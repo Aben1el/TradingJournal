@@ -1,0 +1,13 @@
+{
+  "name": "TradeVault — Professional Trading Journal",
+  "short_name": "TradeVault",
+  "description": "Trade smarter. Understand your performance. Improve consistently.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    { "src": "Images/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "Images/logo.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
