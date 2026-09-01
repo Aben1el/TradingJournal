@@ -1,20 +1,31 @@
-// ============ TradeVault Useful Pack: stat hints + mobile FAB ============
+// ============ TradeVault Useful Pack: hints + FAB + collapsed pill ============
 (function () {
+    const st = document.createElement('style');
+    st.textContent = `
+        body.sb-collapsed .sync-pill { font-size: 0; justify-content: center; align-items: center; width: 26px; height: 26px; border-radius: 50%; margin: .6rem auto 0; padding: 0; }
+        body.sb-collapsed .sync-pill .dot { margin: 0; }
+        .stat-card[title], .today-card[title] { cursor: help; }
+        .tv-fab { position: fixed; bottom: 5rem; right: 1.25rem; z-index: 96; width: 54px; height: 54px; border-radius: 50%; background: var(--accent-gradient); color: #fff; border: none; font-size: 1.6rem; font-weight: 700; display: none; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(99,102,241,.45); transition: transform .2s ease; }
+        .tv-fab:active { transform: scale(.92); }
+        @media (max-width: 768px) { .tv-fab { display: flex; } }
+    `;
+    document.head.appendChild(st);
+
     const HINTS = [
         ['PROFIT FACTOR', 'Gross wins ÷ gross losses. Above 1.5 = healthy edge. Below 1 = losing system → trade smaller and fix it.'],
         ['EXPECTANCY', 'Average $ you earn per trade. Positive = you have an edge.'],
-        ['WIN RATE', 'How often you are right. Always judge it together with Average R — a 40% win rate with big R is profitable.'],
-        ['LOSS RATE', 'The flip side of win rate. Losing streaks inside this % are normal — trust the sample.'],
+        ['WIN RATE', 'How often you are right. Judge it together with Average R — 40% wins with big R is profitable.'],
+        ['LOSS RATE', 'Flip side of win rate. Loss streaks inside this % are normal — trust the sample.'],
         ['AVERAGE R', 'Average reward per trade in R units. Bigger than your average loss R = edge.'],
-        ['MAX DRAWDOWN', 'Worst peak-to-valley drop in $. If this number makes you nervous, cut your risk per trade in half.'],
-        ['BEST TRADE', 'Your biggest winner. Check it was ON plan — luck is not a strategy.'],
-        ['WORST TRADE', 'Your biggest loser. Check if it was OFF plan — that is usually the real lesson.'],
+        ['MAX DRAWDOWN', 'Worst peak-to-valley drop in $. If it makes you nervous, cut risk per trade in half.'],
+        ['BEST TRADE', 'Biggest winner. Check it was ON plan — luck is not a strategy.'],
+        ['WORST TRADE', 'Biggest loser. Check if it was OFF plan — that is usually the real lesson.'],
         ['AVERAGE WIN', 'What a typical winner pays you.'],
-        ['AVERAGE LOSS', 'What a typical loser costs you. Keep this smaller than your average win.'],
-        ['TOTAL TRADES', 'Your sample size. The bigger it is, the more you can trust every other number.'],
+        ['AVERAGE LOSS', 'What a typical loser costs you. Keep it smaller than your average win.'],
+        ['TOTAL TRADES', 'Your sample size. Bigger = every other number becomes more trustworthy.'],
         ['NET P/L', 'Net result of all recorded trades.'],
         ['TOTAL P&L', 'Net result of all recorded trades.'],
-        ["TODAY'S P&L", 'Profit/loss closed today. A green day means the plan worked today.'],
+        ["TODAY'S P&L", 'Profit/loss closed today. Green day = the plan worked today.'],
         ['CURRENT BALANCE', 'Starting balance plus all P/L.'],
         ['TRADING STREAK', 'Consecutive wins. Ride streaks — but never force a trade to protect one.']
     ];
