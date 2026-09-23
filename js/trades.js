@@ -17,7 +17,11 @@
         filters: { search: '', strategy: 'all', result: 'all', session: 'all', dir: 'all', from: '', to: '' },
         page: 1, perPage: 10,
 
-        async all() { let t = await db.getAllTrades(); if (window.tvTradeFilterFn) t = t.filter(window.tvTradeFilterFn); return t; },
+        async all() { 
+            let t = await db.getAllTrades(); 
+            if (window.tvTradeFilterFn) t = t.filter(window.tvTradeFilterFn); 
+            return t; 
+        },
 
         applyFilters(list) {
             const f = this.filters;
