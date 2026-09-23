@@ -1,469 +1,283 @@
-// Trades Module — CRUD, filters, screenshots + CSV import/export
-
+// ============ TradeVault Trades Module v2 — single unified flow ============
 (function () {
-    const s = document.createElement('style');
-    s.textContent = '.modal-overlay>.modal:not(:last-child){display:none!important}';
-    document.head.appendChild(s);
-})();
+    const st = document.createElement('style');
+    st.textContent = `
+        .tf-sec { margin: 1.1rem 0 .6rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); }
+        .tf-sec small { color: var(--text-tertiary); text-transform: none; letter-spacing: 0; }
+        .tf-calc { padding: .6rem .9rem; border-radius: 12px; background: rgba(99,102,241,.08); border: 1px solid rgba(99,102,241,.25); font-size: .78rem; color: var(--text-secondary); margin-bottom: .9rem; }
+        .tf-mistakes { display: flex; gap: .9rem; flex-wrap: wrap; margin: .4rem 0 .2rem; }
+        .tf-mk { display: flex; align-items: center; gap: .4rem; font-size: .78rem; color: var(--text-secondary); cursor: pointer; }
+        .tf-mk input { accent-color: #6366f1; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+        @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+    `;
+    document.head.appendChild(st);
 
-// ---------- CSV helpers ----------
-function tradesToCSV(trades) {
-    const headers = ['entryDate','symbol','market','direction','entryPrice','exitPrice','stopLoss','positionSize','profitLoss','rMultiple','strategy','session','emotionBefore','discipline','confidence','notes'];
-    const esc = (v) => {
-        if (v === null || v === undefined) return '';
-        const s = String(v);
-        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-    };
-    const rows = trades.map(t => headers.map(h => esc(t[h])).join(','));
-    return [headers.join(','), ...rows].join('\n');
-}
+    const trades = {
+        filters: { search: '', strategy: 'all', result: 'all', session: 'all', dir: 'all', from: '', to: '' },
+        page: 1, perPage: 10,
 
-function parseCSVText(text) {
-    const rows = [];
-    let cur = '', row = [], inQ = false;
-    for (let i = 0; i < text.length; i++) {
-        const c = text[i];
-        if (inQ) {
-            if (c === '"') {
-                if (text[i + 1] === '"') { cur += '"'; i++; }
-                else inQ = false;
-            } else cur += c;
-        } else if (c === '"') inQ = true;
-        else if (c === ',') { row.push(cur); cur = ''; }
-        else if (c === '\n' || c === '\r') {
-            if (c === '\r' && text[i + 1] === '\n') i++;
-            row.push(cur); cur = '';
-            if (row.some(x => x.trim() !== '')) rows.push(row);
-            row = [];
-        } else cur += c;
-    }
-    row.push(cur);
-    if (row.some(x => x.trim() !== '')) rows.push(row);
-    return rows;
-}
+        async all() { let t = await db.getAllTrades(); if (window.tvTradeFilterFn) t = t.filter(window.tvTradeFilterFn); return t; },
 
-const CSV_ALIASES = {
-    entrydate: 'entryDate', date: 'entryDate', opendate: 'entryDate', time: 'entryDate',
-    symbol: 'symbol', asset: 'symbol', pair: 'symbol', instrument: 'symbol',
-    market: 'market',
-    direction: 'direction', side: 'direction', type: 'direction',
-    entryprice: 'entryPrice', entry: 'entryPrice', openprice: 'entryPrice',
-    exitprice: 'exitPrice', exit: 'exitPrice', closeprice: 'exitPrice',
-    stoploss: 'stopLoss', sl: 'stopLoss',
-    positionsize: 'positionSize', size: 'positionSize', quantity: 'positionSize', units: 'positionSize', volume: 'positionSize',
-    profitloss: 'profitLoss', pl: 'profitLoss', pnl: 'profitLoss', profit: 'profitLoss',
-    rmultiple: 'rMultiple', r: 'rMultiple',
-    strategy: 'strategy', setup: 'strategy',
-    session: 'session',
-    emotionbefore: 'emotionBefore', emotion: 'emotionBefore',
-    discipline: 'discipline',
-    confidence: 'confidence',
-    notes: 'notes', thesis: 'notes', comment: 'notes'
-};
+        applyFilters(list) {
+            const f = this.filters;
+            return list.filter(t => {
+                if (f.search && !((t.symbol || '') + (t.strategy || '') + (t.tags || '')).toLowerCase().includes(f.search.toLowerCase())) return false;
+                if (f.strategy !== 'all' && t.strategy !== f.strategy) return false;
+                if (f.result === 'win' && !(t.profitLoss > 0)) return false;
+                if (f.result === 'loss' && !(t.profitLoss < 0)) return false;
+                if (f.session !== 'all' && t.session !== f.session) return false;
+                if (f.dir !== 'all' && t.direction !== f.dir) return false;
+                if (f.from && new Date(t.entryDate) < new Date(f.from)) return false;
+                if (f.to && new Date(t.entryDate) > new Date(f.to + 'T23:59:59')) return false;
+                return true;
+            });
+        },
 
-class Trades {
-    constructor() {
-        this.currentPage = 1;
-        this.itemsPerPage = 20;
-        this.filters = { search: '', asset: '', strategy: '', result: '', direction: '' };
-        this.setupCSVButtons();
-    }
+        async loadTrades() {
+            this.ensureFilters();
+            const list = this.applyFilters(await this.all()).sort((a, b) => new Date(b.entryDate) - new Date(a.entryDate));
+            const jg = document.getElementById('journalGrid');
+            if (jg) jg.innerHTML = list.length ? list.slice(0, 12).map(t => this.cardHTML(t)).join('') : '<div class="empty-state"><h3>No trades yet</h3><p>Start building your trading history and your performance insights will appear here.</p></div>';
+            const tb = document.querySelector('#tradesTable tbody');
+            const pages = Math.max(1, Math.ceil(list.length / this.perPage));
+            if (this.page > pages) this.page = pages;
+            const slice = list.slice((this.page - 1) * this.perPage, this.page * this.perPage);
+            if (tb) tb.innerHTML = slice.length ? slice.map(t => this.rowHTML(t)).join('') : '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-tertiary);">No trades match your filters.</td></tr>';
+            const pg = document.getElementById('tradesPagination');
+            if (pg) pg.innerHTML = pages > 1 ? `<button class="btn btn-text" ${this.page === 1 ? 'disabled' : ''} onclick="trades.goto(${this.page - 1})">←</button><span style="font-size:.8rem;color:var(--text-secondary);">Page ${this.page} / ${pages}</span><button class="btn btn-text" ${this.page === pages ? 'disabled' : ''} onclick="trades.goto(${this.page + 1})">→</button>` : '';
+        },
+        goto(p) { this.page = p; this.loadTrades(); },
 
-    // ONE modal at a time — hard stop
-    _modalBusy() {
-        const ov = document.getElementById('modalOverlay');
-        return ov && ov.classList.contains('active');
-    }
-    _modalReset() {
-        const ov = document.getElementById('modalOverlay');
-        if (ov) ov.innerHTML = '';
-    }
+        cardHTML(t) {
+            return `<div class="trade-card ${t.profitLoss >= 0 ? 'win' : 'loss'}" onclick="trades.showTradeDetail(${t.id})">
+                <div class="trade-card-header"><span class="trade-symbol">${t.symbol}</span><span class="trade-pl ${t.profitLoss >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(t.profitLoss)}</span></div>
+                <div class="trade-card-body"><div class="trade-meta"><span class="badge ${t.direction === 'long' ? 'badge-long' : 'badge-short'}">${t.direction}</span><span>${t.strategy || 'No strategy'}</span><span>${t.session || ''}</span></div></div>
+                <div class="trade-card-footer"><span>${formatDate(t.entryDate)}</span><span class="${t.profitLoss >= 0 ? 'text-success' : 'text-danger'}">${t.profitLoss >= 0 ? 'WIN' : 'LOSS'}</span></div></div>`;
+        },
+        rowHTML(t) {
+            return `<tr style="cursor:pointer" onclick="trades.showTradeDetail(${t.id})">
+                <td>${formatDate(t.entryDate)}</td><td><strong>${t.symbol}</strong></td>
+                <td><span class="badge ${t.direction === 'long' ? 'badge-long' : 'badge-short'}">${t.direction}</span></td>
+                <td>${t.entryPrice ?? '—'}</td><td>${t.exitPrice ?? '—'}</td>
+                <td class="${t.profitLoss >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(t.profitLoss)}</td>
+                <td>${t.rMultiple ?? '—'}R</td><td>${t.strategy || '—'}</td>
+                <td><span class="badge ${t.profitLoss >= 0 ? 'badge-long' : 'badge-short'}">${t.profitLoss >= 0 ? 'WIN' : 'LOSS'}</span></td></tr>`;
+        },
 
-    // Auto-injects Export/Import CSV buttons (no HTML change needed)
-    setupCSVButtons() {
-        const actions = document.querySelector('#trades .header-actions');
-        if (!actions || document.getElementById('exportCsvBtn')) return;
+        ensureFilters() {
+            const bar = document.querySelector('#trades .filters-bar');
+            if (!bar || bar.dataset.v2) return;
+            bar.dataset.v2 = '1';
+            const tagBar = document.getElementById('tvTagBar');
+            bar.innerHTML = '';
+            if (tagBar) bar.appendChild(tagBar);
+            bar.insertAdjacentHTML('beforeend', `
+                <input type="text" id="tradeSearch" placeholder="Search symbol, strategy, tag…">
+                <select id="filterStrategy"><option value="all">All Strategies</option></select>
+                <select id="filterResult"><option value="all">Win & Loss</option><option value="win">Wins only</option><option value="loss">Losses only</option></select>
+                <select id="filterSession"><option value="all">All Sessions</option><option>London</option><option>New York</option><option>Asian</option></select>
+                <select id="filterDir"><option value="all">Long & Short</option><option value="long">Long</option><option value="short">Short</option></select>
+                <input type="date" id="filterFrom" title="From date">
+                <input type="date" id="filterTo" title="To date">`);
+            const bind = (id, key) => { const el = document.getElementById(id); if (el) el.oninput = () => { this.filters[key] = el.value; this.page = 1; this.loadTrades(); }; };
+            bind('tradeSearch', 'search'); bind('filterStrategy', 'strategy'); bind('filterResult', 'result');
+            bind('filterSession', 'session'); bind('filterDir', 'dir'); bind('filterFrom', 'from'); bind('filterTo', 'to');
+            (async () => {
+                const all = await this.all();
+                const strs = [...new Set(all.map(t => t.strategy).filter(Boolean))];
+                const sel = document.getElementById('filterStrategy');
+                if (sel) strs.forEach(s => sel.insertAdjacentHTML('beforeend', `<option>${s}</option>`));
+            })();
+        },
 
-        const exp = document.createElement('button');
-        exp.id = 'exportCsvBtn';
-        exp.className = 'btn btn-secondary';
-        exp.textContent = 'Export CSV';
+        async showTradeModal(id) {
+            const ov = document.getElementById('modalOverlay');
+            if (!ov || ov.classList.contains('active')) return;
+            let t = null;
+            if (id) t = (await db.getAllTrades()).find(x => x.id === id) || null;
+            const em = ['Confident', 'Calm', 'Patient', 'FOMO', 'Fear', 'Greedy', 'Anxious', 'Disciplined'];
+            const opt = (arr, cur) => `<option value=""></option>` + arr.map(o => `<option ${o === cur ? 'selected' : ''}>${o}</option>`).join('');
+            const v = k => t ? (t[k] ?? '') : '';
+            ov.innerHTML = `<div class="modal"><div class="modal-header"><h2>${t ? 'Edit' : 'Add'} Trade</h2><button class="modal-close" onclick="app.closeModal()">✕</button></div>
+            <div class="modal-body"><form id="tradeForm">
+              <h5 class="tf-sec">Basic</h5>
+              <div class="form-grid">
+                <div class="form-group"><label>Symbol *</label><input class="form-control" name="symbol" required value="${v('symbol')}" placeholder="XAUUSD"></div>
+                <div class="form-group"><label>Direction</label><select class="form-control" name="direction"><option value="long" ${t && t.direction === 'long' ? 'selected' : ''}>Long</option><option value="short" ${t && t.direction === 'short' ? 'selected' : ''}>Short</option></select></div>
+                <div class="form-group"><label>Date *</label><input class="form-control" type="date" name="entryDate" required value="${t ? t.entryDate : new Date().toISOString().split('T')[0]}"></div>
+                <div class="form-group"><label>Session</label><select class="form-control" name="session">${opt(['London', 'New York', 'Asian'], t && t.session)}</select></div>
+                <div class="form-group"><label>Timeframe</label><select class="form-control" name="timeframe">${opt(['M5', 'M15', 'M30', 'H1', 'H4', 'D1'], t && t.timeframe)}</select></div>
+                <div class="form-group"><label>Leverage</label><input class="form-control" type="number" step="any" name="leverage" value="${v('leverage')}" placeholder="100"></div>
+                <div class="form-group"><label>Entry Price</label><input class="form-control" type="number" step="any" name="entryPrice" value="${v('entryPrice')}"></div>
+                <div class="form-group"><label>Stop Loss</label><input class="form-control" type="number" step="any" name="stopLoss" value="${v('stopLoss')}"></div>
+                <div class="form-group"><label>Take Profit</label><input class="form-control" type="number" step="any" name="takeProfit" value="${v('takeProfit')}"></div>
+                <div class="form-group"><label>Exit Price</label><input class="form-control" type="number" step="any" name="exitPrice" value="${v('exitPrice')}"></div>
+                <div class="form-group"><label>Position Size</label><input class="form-control" type="number" step="any" name="positionSize" value="${v('positionSize')}"></div>
+              </div>
+              <h5 class="tf-sec">Financial <small>(auto-calculated)</small></h5>
+              <div class="tf-calc" id="tfCalc">Risk: — · Reward: — · R:R: — · Risk %: —</div>
+              <div class="form-grid">
+                <div class="form-group"><label>Fees / Commission</label><input class="form-control" type="number" step="any" name="fees" value="${v('fees')}"></div>
+                <div class="form-group"><label>Swap</label><input class="form-control" type="number" step="any" name="swap" value="${v('swap')}"></div>
+                <div class="form-group"><label>Actual P&L ($) *</label><input class="form-control" type="number" step="any" name="profitLoss" required value="${v('profitLoss')}"></div>
+                <div class="form-group"><label>R Multiple</label><input class="form-control" type="number" step="any" name="rMultiple" value="${v('rMultiple')}"></div>
+              </div>
+              <h5 class="tf-sec">Strategy & Setup</h5>
+              <div class="form-grid">
+                <div class="form-group"><label>Strategy</label><input class="form-control" name="strategy" list="tvStratList" value="${v('strategy')}"><datalist id="tvStratList"></datalist></div>
+                <div class="form-group"><label>Setup Type</label><input class="form-control" name="setupType" value="${v('setupType')}" placeholder="Breakout, Pullback…"></div>
+                <div class="form-group"><label>Market Condition</label><select class="form-control" name="marketCondition">${opt(['Trending', 'Ranging', 'Volatile', 'Quiet'], t && t.marketCondition)}</select></div>
+                <div class="form-group"><label>Entry Reason</label><input class="form-control" name="entryReason" value="${v('entryReason')}"></div>
+                <div class="form-group"><label>Exit Reason</label><input class="form-control" name="exitReason" value="${v('exitReason')}"></div>
+              </div>
+              <h5 class="tf-sec">Psychology</h5>
+              <div class="form-grid">
+                <div class="form-group"><label>Emotion Before</label><select class="form-control" name="emotionBefore">${opt(em, t && t.emotionBefore)}</select></div>
+                <div class="form-group"><label>Emotion During</label><select class="form-control" name="emotionDuring">${opt(em, t && t.emotionDuring)}</select></div>
+                <div class="form-group"><label>Emotion After</label><select class="form-control" name="emotionAfter">${opt(em, t && t.emotionAfter)}</select></div>
+                <div class="form-group"><label>Confidence (1-10)</label><input class="form-control" type="number" min="1" max="10" name="confidence" value="${v('confidence')}"></div>
+                <div class="form-group"><label>Discipline (1-10)</label><input class="form-control" type="number" min="1" max="10" name="discipline" value="${v('discipline')}"></div>
+              </div>
+              <div class="tf-mistakes">
+                ${['FOMO', 'Revenge', 'Overtrading', 'Fear', 'Greed', 'Impatience'].map(m => `<label class="tf-mk"><input type="checkbox" value="${m}" ${t && (t.mistakes || '').includes(m) ? 'checked' : ''}> ${m}</label>`).join('')}
+                <label class="tf-mk"><input type="checkbox" name="ruleBroken" ${t && t.ruleBroken ? 'checked' : ''}> ⚠️ Broke my rules</label>
+              </div>
+              <h5 class="tf-sec">Screenshots</h5>
+              <div class="form-group"><input type="file" accept="image/*" multiple id="tfShots" style="font-size:.8rem;"><div id="tfShotPrev" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;"></div></div>
+              <h5 class="tf-sec">Journal</h5>
+              <div class="form-group"><textarea class="form-control" name="notes" rows="5" placeholder="Why did I enter? What did I expect? What happened?">${v('notes')}</textarea>
+              <button type="button" class="btn btn-text" id="tfTemplate" style="min-height:auto;padding:.3rem .6rem;margin-top:.4rem;">📝 Use 6-question template</button></div>
+            </form></div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="app.closeModal()">Cancel</button><button class="btn btn-primary" id="tfSave">${t ? 'Save Changes' : 'Add Trade'}</button></div></div>`;
+            ov.classList.add('active');
+            this.bindForm(t);
+        },
 
-        const imp = document.createElement('button');
-        imp.id = 'importCsvBtn';
-        imp.className = 'btn btn-secondary';
-        imp.textContent = 'Import CSV';
-
-        actions.appendChild(exp);
-        actions.appendChild(imp);
-
-        exp.addEventListener('click', async () => {
-            const trades = await db.getAllTrades();
-            if (!trades || trades.length === 0) { showToast('No trades to export yet', 'warning'); return; }
-            const csv = tradesToCSV(trades);
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `tradevault-trades-${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('CSV exported successfully!');
-        });
-
-        imp.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.csv,text/csv';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                try {
-                    const rows = parseCSVText(await file.text());
-                    if (rows.length < 2) { showToast('CSV has no data rows', 'error'); return; }
-                    const headers = rows[0].map(h => CSV_ALIASES[h.trim().toLowerCase()] || null);
-                    let count = 0;
-                    for (let i = 1; i < rows.length; i++) {
-                        const trade = {};
-                        rows[i].forEach((val, idx) => {
-                            const key = headers[idx];
-                            if (key && val !== undefined && val !== '') trade[key] = val;
-                        });
-                        if (!trade.symbol) continue;
-
-                        let dir = String(trade.direction || '').toLowerCase();
-                        trade.direction = dir.startsWith('b') ? 'long' : dir.startsWith('s') ? 'short' : (dir === 'long' || dir === 'short' ? dir : 'long');
-                        trade.entryPrice = parseFloat(trade.entryPrice) || 0;
-                        trade.exitPrice = parseFloat(trade.exitPrice) || 0;
-                        trade.stopLoss = parseFloat(trade.stopLoss) || undefined;
-                        trade.positionSize = parseFloat(trade.positionSize) || undefined;
-                        trade.profitLoss = parseFloat(trade.profitLoss);
-                        if (isNaN(trade.profitLoss) && trade.entryPrice && trade.exitPrice && trade.positionSize) {
-                            trade.profitLoss = calculatePL(trade.entryPrice, trade.exitPrice, trade.direction, trade.positionSize);
-                        }
-                        trade.profitLoss = isNaN(trade.profitLoss) ? 0 : trade.profitLoss;
-                        trade.rMultiple = parseFloat(trade.rMultiple) || (trade.stopLoss ? calculateRMultiple(trade.entryPrice, trade.exitPrice, trade.stopLoss, trade.direction) : undefined);
-                        trade.discipline = parseInt(trade.discipline) || undefined;
-                        trade.confidence = parseInt(trade.confidence) || undefined;
-                        if (!trade.entryDate) trade.entryDate = new Date().toISOString().split('T')[0];
-
-                        await db.addTrade(trade);
-                        count++;
-                    }
-                    showToast(`Imported ${count} trades!`);
-                    this.loadTrades();
-                    dashboard.loadDashboard();
-                } catch (err) {
-                    console.error(err);
-                    showToast('Invalid CSV file', 'error');
-                }
-            };
-            input.click();
-        });
-    }
-
-    async loadTrades() {
-        const trades = await db.getAllTrades();
-        const filtered = this.applyFilters(trades);
-        const sorted = [...filtered].sort((a, b) => new Date(b.entryDate) - new Date(a.entryDate));
-        
-        this.renderJournalView(sorted);
-        this.renderTableView(sorted);
-        this.updateFilterOptions(trades);
-    }
-
-    applyFilters(trades) {
-        return trades.filter(t => {
-            if (this.filters.search) {
-                const s = this.filters.search.toLowerCase();
-                if (!(t.symbol || '').toLowerCase().includes(s) && !(t.strategy || '').toLowerCase().includes(s)) return false;
-            }
-            if (this.filters.asset && t.symbol !== this.filters.asset) return false;
-            if (this.filters.strategy && t.strategy !== this.filters.strategy) return false;
-            if (this.filters.result === 'win' && t.profitLoss <= 0) return false;
-            if (this.filters.result === 'loss' && t.profitLoss >= 0) return false;
-            if (this.filters.direction && t.direction !== this.filters.direction) return false;
-            return true;
-        });
-    }
-
-    renderJournalView(trades) {
-        const grid = document.getElementById('journalGrid');
-        if (!grid) return;
-
-        if (trades.length === 0) {
-            grid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">
-                <h3>No trades yet</h3>
-                <p>Start recording your trades to build your journal</p>
-                <button class="btn btn-primary" onclick="trades.showTradeModal()">Add Your First Trade</button>
-            </div>`;
-            return;
-        }
-
-        grid.innerHTML = trades.map(t => `
-            <div class="trade-card" onclick="trades.showTradeDetail(${t.id})">
-                <div class="trade-card-header">
-                    <div class="trade-symbol">${t.symbol || 'Unknown'}</div>
-                    <div class="trade-direction ${t.direction}">${t.direction || 'N/A'}</div>
-                </div>
-                <div class="trade-card-body">
-                    <div class="trade-info"><div class="trade-info-label">Entry</div><div class="trade-info-value">${formatNumber(t.entryPrice, 5)}</div></div>
-                    <div class="trade-info"><div class="trade-info-label">Exit</div><div class="trade-info-value">${formatNumber(t.exitPrice, 5)}</div></div>
-                    <div class="trade-info"><div class="trade-info-label">Strategy</div><div class="trade-info-value">${t.strategy || 'N/A'}</div></div>
-                    <div class="trade-info"><div class="trade-info-label">R Multiple</div><div class="trade-info-value">${formatNumber(t.rMultiple, 2)}R</div></div>
-                </div>
-                <div class="trade-card-footer">
-                    <div class="trade-pl ${t.profitLoss >= 0 ? 'positive' : 'negative'}">${formatCurrency(t.profitLoss)}</div>
-                    <div class="trade-date">${formatDate(t.entryDate)}</div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    renderTableView(trades) {
-        const tbody = document.getElementById('tradesTableBody');
-        if (!tbody) return;
-
-        if (trades.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:3rem;">No trades found</td></tr>`;
-            return;
-        }
-
-        const start = (this.currentPage - 1) * this.itemsPerPage;
-        const pageTrades = trades.slice(start, start + this.itemsPerPage);
-
-        tbody.innerHTML = pageTrades.map(t => `
-            <tr onclick="trades.showTradeDetail(${t.id})">
-                <td>${formatDate(t.entryDate)}</td>
-                <td><strong>${t.symbol || 'N/A'}</strong></td>
-                <td><span class="badge ${t.direction === 'long' ? 'badge-success' : 'badge-danger'}">${t.direction || 'N/A'}</span></td>
-                <td>${formatNumber(t.entryPrice, 5)}</td>
-                <td>${formatNumber(t.exitPrice, 5)}</td>
-                <td class="${t.profitLoss >= 0 ? 'text-success' : 'text-danger'}"><strong>${formatCurrency(t.profitLoss)}</strong></td>
-                <td>${formatNumber(t.rMultiple, 2)}R</td>
-                <td>${t.strategy || 'N/A'}</td>
-                <td><span class="badge ${t.profitLoss > 0 ? 'badge-success' : t.profitLoss < 0 ? 'badge-danger' : 'badge-neutral'}">${t.profitLoss > 0 ? 'Win' : t.profitLoss < 0 ? 'Loss' : 'BE'}</span></td>
-                <td>
-                    <div class="table-actions">
-                        <button class="table-action-btn" onclick="event.stopPropagation(); trades.showTradeModal(${t.id})">✏️</button>
-                        <button class="table-action-btn delete" onclick="event.stopPropagation(); trades.deleteTrade(${t.id})">🗑️</button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    updateFilterOptions(trades) {
-        const assets = [...new Set(trades.map(t => t.symbol).filter(Boolean))];
-        const assetFilter = document.getElementById('filterAsset');
-        if (assetFilter) {
-            const val = assetFilter.value;
-            assetFilter.innerHTML = '<option value="">All Assets</option>' + assets.map(a => `<option value="${a}" ${a===val?'selected':''}>${a}</option>`).join('');
-        }
-
-        const strategies = [...new Set(trades.map(t => t.strategy).filter(Boolean))];
-        const stratFilter = document.getElementById('filterStrategy');
-        if (stratFilter) {
-            const val = stratFilter.value;
-            stratFilter.innerHTML = '<option value="">All Strategies</option>' + strategies.map(s => `<option value="${s}" ${s===val?'selected':''}>${s}</option>`).join('');
-        }
-    }
-
-    async showTradeModal(tradeId = null) {
-        if (this._modalBusy()) return;               // ← hard stop
-        this._modalReset();                          // ← clean slate
-        const overlay = document.getElementById('modalOverlay');
-        let trade = tradeId ? await db.getTrade(tradeId) : null;
-        const strategies = await db.getAllStrategies();
-        const stratOptions = strategies.map(s => `<option value="${s.name}" ${trade && trade.strategy === s.name ? 'selected' : ''}>${s.name}</option>`).join('');
-
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-header">
-                <h2>${tradeId ? 'Edit' : 'Add'} Trade</h2>
-                <button class="modal-close" onclick="app.closeModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <form id="tradeForm">
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
-                        <div class="form-group"><label>Symbol/Asset *</label><input type="text" class="form-control" name="symbol" value="${trade?.symbol || ''}" required></div>
-                        <div class="form-group"><label>Market</label><select class="form-control" name="market"><option value="forex" ${trade?.market==='forex'?'selected':''}>Forex</option><option value="crypto" ${trade?.market==='crypto'?'selected':''}>Crypto</option><option value="stocks" ${trade?.market==='stocks'?'selected':''}>Stocks</option><option value="indices" ${trade?.market==='indices'?'selected':''}>Indices</option></select></div>
-                        <div class="form-group"><label>Direction *</label><select class="form-control" name="direction" required><option value="long" ${trade?.direction==='long'?'selected':''}>Long</option><option value="short" ${trade?.direction==='short'?'selected':''}>Short</option></select></div>
-                        <div class="form-group"><label>Entry Date *</label><input type="date" class="form-control" name="entryDate" value="${trade?.entryDate ? trade.entryDate.split('T')[0] : new Date().toISOString().split('T')[0]}" required></div>
-                    </div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-top:1rem;">
-                        <div class="form-group"><label>Entry Price *</label><input type="number" step="0.00001" class="form-control" name="entryPrice" value="${trade?.entryPrice || ''}" required></div>
-                        <div class="form-group"><label>Exit Price *</label><input type="number" step="0.00001" class="form-control" name="exitPrice" value="${trade?.exitPrice || ''}" required></div>
-                        <div class="form-group"><label>Stop Loss</label><input type="number" step="0.00001" class="form-control" name="stopLoss" value="${trade?.stopLoss || ''}"></div>
-                        <div class="form-group"><label>Position Size</label><input type="number" step="0.01" class="form-control" name="positionSize" value="${trade?.positionSize || ''}"></div>
-                    </div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-top:1rem;">
-                        <div class="form-group"><label>Profit/Loss *</label><input type="number" step="0.01" class="form-control" name="profitLoss" value="${trade?.profitLoss || ''}" required></div>
-                        <div class="form-group"><label>R Multiple</label><input type="number" step="0.01" class="form-control" name="rMultiple" value="${trade?.rMultiple || ''}"></div>
-                        <div class="form-group"><label>Strategy</label><select class="form-control" name="strategy"><option value="">None</option>${stratOptions}</select></div>
-                        <div class="form-group"><label>Session</label><select class="form-control" name="session"><option value="">None</option><option value="Asian" ${trade?.session==='Asian'?'selected':''}>Asian</option><option value="London" ${trade?.session==='London'?'selected':''}>London</option><option value="New York" ${trade?.session==='New York'?'selected':''}>New York</option></select></div>
-                    </div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-top:1rem;">
-                        <div class="form-group"><label>Emotion Before</label><input type="text" class="form-control" name="emotionBefore" value="${trade?.emotionBefore || ''}" placeholder="Calm, FOMO, Confident..."></div>
-                        <div class="form-group"><label>Discipline (1-10)</label><input type="number" min="1" max="10" class="form-control" name="discipline" value="${trade?.discipline || ''}"></div>
-                        <div class="form-group"><label>Confidence (1-10)</label><input type="number" min="1" max="10" class="form-control" name="confidence" value="${trade?.confidence || ''}"></div>
-                    </div>
-                    <div class="form-group" style="margin-top:1rem;"><label>Notes</label><textarea class="form-control" name="notes" rows="3">${trade?.notes || ''}</textarea></div>
-                    
-                    <div class="form-group" style="margin-top:1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-                        <label>Chart Screenshot</label>
-                        <input type="file" class="form-control" id="screenshotInput" accept="image/*">
-                        ${trade?.screenshot ? `<div class="trade-screenshot-container"><img src="${trade.screenshot}" alt="Current Screenshot"></div>` : ''}
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="app.closeModal()">Cancel</button>
-                <button class="btn btn-primary" id="saveTradeBtn">Save Trade</button>
-            </div>
-        `;
-        
-        overlay.appendChild(modal);
-        overlay.classList.add('active');
-
-        document.getElementById('saveTradeBtn').onclick = async () => {
+        bindForm(t) {
             const form = document.getElementById('tradeForm');
-            if (!form.checkValidity()) { form.reportValidity(); return; }
-            
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            data.profitLoss = parseFloat(data.profitLoss);
-            data.entryPrice = parseFloat(data.entryPrice);
-            data.exitPrice = parseFloat(data.exitPrice);
-            if (data.stopLoss) data.stopLoss = parseFloat(data.stopLoss);
-            if (data.positionSize) data.positionSize = parseFloat(data.positionSize);
-            if (data.rMultiple) data.rMultiple = parseFloat(data.rMultiple);
-            if (data.discipline) data.discipline = parseInt(data.discipline);
-            if (data.confidence) data.confidence = parseInt(data.confidence);
-
-            const fileInput = document.getElementById('screenshotInput');
-            
-            const saveToDatabase = async (finalData) => {
-                try {
-                    if (tradeId) {
-                        finalData.id = tradeId;
-                        await db.updateTrade(finalData);
-                        showToast('Trade updated successfully!');
-                    } else {
-                        await db.addTrade(finalData);
-                        showToast('Trade added successfully!');
-                    }
-                    app.closeModal();
-                    this.loadTrades();
-                    dashboard.loadDashboard();
-                } catch (e) {
-                    showToast('Error saving trade', 'error');
-                }
+            const calc = async () => {
+                const g = n => parseFloat(form.querySelector(`[name="${n}"]`)?.value);
+                const entry = g('entryPrice'), stop = g('stopLoss'), tp = g('takeProfit'), size = g('positionSize'), pl = g('profitLoss');
+                let bal = 10000;
+                const accId = localStorage.getItem('tv_active_account_id');
+                if (accId && window.tvClient) { const { data: a } = await tvClient.from('trading_accounts').select('starting_balance').eq('id', accId).single(); if (a) bal = parseFloat(a.starting_balance) || bal; }
+                const risk = (entry != null && stop != null && size != null) ? Math.abs(entry - stop) * size : null;
+                const rew = (entry != null && tp != null && size != null) ? Math.abs(tp - entry) * size : null;
+                const rr = (risk && rew) ? (rew / risk).toFixed(2) : null;
+                const rp = risk ? (risk / bal * 100).toFixed(2) : null;
+                const el = document.getElementById('tfCalc');
+                if (el) el.innerHTML = `Risk: <strong>${risk != null ? formatCurrency(risk) : '—'}</strong> · Reward: <strong>${rew != null ? formatCurrency(rew) : '—'}</strong> · R:R: <strong>${rr ?? '—'}</strong> · Risk: <strong>${rp != null ? rp + '%' : '—'}</strong>`;
+                form.dataset.risk = risk ?? ''; form.dataset.reward = rew ?? ''; form.dataset.riskPct = rp ?? '';
+                const rIn = form.querySelector('[name="rMultiple"]');
+                if (risk && pl != null && document.activeElement !== rIn) rIn.value = (pl / risk).toFixed(2);
             };
+            ['entryPrice', 'stopLoss', 'takeProfit', 'positionSize', 'profitLoss'].forEach(n => { const el = form.querySelector(`[name="${n}"]`); if (el) el.oninput = calc; });
+            calc();
+            (async () => { if (typeof db !== 'undefined') { const s = await db.getAllStrategies(); const dl = document.getElementById('tvStratList'); if (dl) (s || []).forEach(x => dl.insertAdjacentHTML('beforeend', `<option value="${x.name}">`)); } })();
+            document.getElementById('tfTemplate').onclick = () => {
+                const ta = form.querySelector('[name="notes"]');
+                if (ta.value.trim()) return showToast('Notes already has content', 'warning');
+                ta.value = 'Why did I enter?\n\nWhat did I expect?\n\nWhat actually happened?\n\nWhat did I do correctly?\n\nWhat did I do wrong?\n\nWhat will I do differently next time?\n';
+            };
+            const prev = document.getElementById('tfShotPrev');
+            const existing = (t && t.screenshots) || [];
+            const thumbs = existing.map(u => `<img src="${u}" style="width:64px;height:48px;object-fit:cover;border-radius:8px;">`).join('');
+            prev.innerHTML = thumbs;
+            document.getElementById('tfShots').onchange = e => { prev.innerHTML = thumbs + [...e.target.files].map(() => `<div class="skel" style="width:64px;height:48px;"></div>`).join(''); };
+            const btn = document.getElementById('tfSave');
+            btn.onclick = async () => {
+                if (btn.disabled) return;               // ← one submission per click
+                btn.disabled = true; btn.textContent = 'Saving…';
+                try { await this.save(form, t, existing); } finally { btn.disabled = false; btn.textContent = t ? 'Save Changes' : 'Add Trade'; }
+            };
+        },
 
-            if (fileInput && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    data.screenshot = e.target.result;
-                    saveToDatabase(data);
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                if (trade && trade.screenshot) data.screenshot = trade.screenshot;
-                saveToDatabase(data);
+        async save(form, t, existingShots) {
+            if (!form.reportValidity()) return;
+            const fd = new FormData(form);
+            const d = Object.fromEntries(fd.entries());
+            ['entryPrice', 'exitPrice', 'stopLoss', 'takeProfit', 'positionSize', 'leverage', 'fees', 'swap', 'profitLoss', 'rMultiple', 'confidence', 'discipline'].forEach(k => { if (d[k] !== '' && d[k] != null) d[k] = parseFloat(d[k]); else delete d[k]; });
+            d.mistakes = [...form.querySelectorAll('.tf-mk input:checked:not([name="ruleBroken"])')].map(i => i.value).join(', ');
+            d.ruleBroken = form.querySelector('[name="ruleBroken"]').checked;
+            d.riskAmount = parseFloat(form.dataset.risk) || null;
+            d.riskPct = parseFloat(form.dataset.riskPct) || null;
+            d.potentialProfit = parseFloat(form.dataset.reward) || null;
+            const files = [...document.getElementById('tfShots').files];
+            let shots = [...existingShots];
+            for (const f of files) {
+                try {
+                    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}-${f.name}`;
+                    const { error } = await tvClient.storage.from('screenshots').upload(path, f);
+                    if (!error) shots.push(tvClient.storage.from('screenshots').getPublicUrl(path).data.publicUrl);
+                } catch (e) { console.warn(e); }
             }
-        };
-    }
+            d.screenshots = shots;
+            if (t) await db.updateTrade(Object.assign({}, d, { id: t.id }));
+            else await db.addTrade(d);
+            app.closeModal();
+            showToast(t ? 'Trade updated ✅' : 'Trade added ✅');
+            if (typeof app !== 'undefined') app.init();
+        },
 
-    async deleteTrade(id) {
-        if (await confirmDialog('Are you sure you want to delete this trade?')) {
-            await db.deleteTrade(id);
-            showToast('Trade deleted');
-            this.loadTrades();
-            dashboard.loadDashboard();
+        async showTradeDetail(id) {
+            const ov = document.getElementById('modalOverlay');
+            if (!ov || ov.classList.contains('active')) return;
+            const t = (await db.getAllTrades()).find(x => x.id === id);
+            if (!t) return;
+            const row = (k, val) => `<div><strong>${k}:</strong> ${val ?? '—'}</div>`;
+            ov.innerHTML = `<div class="modal"><div class="modal-header"><h2>${t.symbol} · ${t.direction}</h2><button class="modal-close" onclick="app.closeModal()">✕</button></div>
+            <div class="modal-body"><div class="trade-detail">
+              <div class="trade-detail-section"><h4>Trade</h4><div class="trade-detail-grid">
+                ${row('Date', formatDate(t.entryDate))}${row('Session', t.session)}${row('Timeframe', t.timeframe)}${row('Entry', t.entryPrice)}${row('Stop', t.stopLoss)}${row('Target', t.takeProfit)}${row('Exit', t.exitPrice)}${row('Size', t.positionSize)}${row('Leverage', t.leverage)}${row('Fees', t.fees)}${row('Swap', t.swap)}${row('P&L', `<span class="${t.profitLoss >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(t.profitLoss)}</span>`)}${row('R', t.rMultiple)}
+              </div></div>
+              <div class="trade-detail-section"><h4>Strategy & Mind</h4><div class="trade-detail-grid">
+                ${row('Strategy', t.strategy)}${row('Setup', t.setupType)}${row('Condition', t.marketCondition)}${row('Entry reason', t.entryReason)}${row('Exit reason', t.exitReason)}${row('Before', t.emotionBefore)}${row('During', t.emotionDuring)}${row('After', t.emotionAfter)}${row('Confidence', t.confidence)}${row('Discipline', t.discipline)}${row('Mistakes', t.mistakes || 'None')}${row('Rules broken', t.ruleBroken ? '⚠️ YES' : '✅ No')}
+              </div></div>
+              ${t.notes ? `<div class="trade-detail-section"><h4>Journal</h4><p style="white-space:pre-wrap;font-size:.85rem;color:var(--text-secondary);">${t.notes}</p></div>` : ''}
+              ${t.screenshots && t.screenshots.length ? `<div class="trade-detail-section"><h4>Screenshots</h4><div style="display:flex;gap:.6rem;flex-wrap:wrap;">${t.screenshots.map(u => `<img src="${u}" style="width:110px;height:80px;object-fit:cover;border-radius:10px;cursor:pointer;" onclick="window.open('${u}')">`).join('')}</div></div>` : ''}
+            </div></div>
+            <div class="modal-footer"><button class="btn btn-danger" onclick="trades.deleteTrade(${t.id})">Delete</button><button class="btn btn-secondary" onclick="trades.editFromDetail(${t.id})">Edit</button><button class="btn btn-primary" onclick="app.closeModal()">Close</button></div></div>`;
+            ov.classList.add('active');
+        },
+        editFromDetail(id) { app.closeModal(); setTimeout(() => this.showTradeModal(id), 60); },
+        async deleteTrade(id) { if (!confirm('Delete this trade?')) return; await db.deleteTrade(id); app.closeModal(); showToast('Trade deleted'); if (typeof app !== 'undefined') app.init(); },
+
+        async exportCSV() {
+            const list = await this.all();
+            const cols = ['entryDate', 'symbol', 'direction', 'entryPrice', 'exitPrice', 'stopLoss', 'takeProfit', 'positionSize', 'profitLoss', 'rMultiple', 'strategy', 'session', 'timeframe', 'emotionBefore', 'discipline', 'tags'];
+            const csv = [cols.join(',')].concat(list.map(t => cols.map(c => `"${(t[c] ?? '').toString().replace(/"/g, '""')}"`).join(','))).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            a.download = 'tradevault-trades.csv'; a.click();
+        },
+        importCSV() {
+            const i = document.createElement('input'); i.type = 'file'; i.accept = '.csv';
+            i.onchange = async () => {
+                const text = await i.files[0].text();
+                const lines = text.trim().split('\n');
+                const head = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+                let n = 0;
+                for (let r = 1; r < lines.length; r++) {
+                    const vals = lines[r].match(/("([^"]|"")*"|[^,]*)(,|$)/g).slice(0, -1).map(x => x.replace(/,$/, '').replace(/^"|"$/g, '').replace(/""/g, '"'));
+                    const o = {}; head.forEach((h, k) => o[h] = vals[k]);
+                    if (!o.symbol || !o.entryDate) continue;
+                    await db.addTrade({ symbol: o.symbol, direction: o.direction || 'long', entryDate: o.entryDate, entryPrice: parseFloat(o.entryPrice) || 0, exitPrice: parseFloat(o.exitPrice) || 0, positionSize: parseFloat(o.positionSize) || 1, profitLoss: parseFloat(o.profitLoss) || 0, strategy: o.strategy || '', session: o.session || '', notes: 'CSV import' });
+                    n++;
+                }
+                showToast(`Imported ${n} trades ✅`);
+                if (typeof app !== 'undefined') app.init();
+            };
+            i.click();
+        },
+
+        bindButtons() {
+            const e = document.getElementById('exportTradesBtn'); if (e && !e.__b) { e.__b = 1; e.onclick = () => this.exportCSV(); }
+            const m = document.getElementById('importTradesBtn'); if (m && !m.__b) { m.__b = 1; m.onclick = () => this.importCSV(); }
+            const a = document.getElementById('addTradeBtn2'); if (a && !a.__b) { a.__b = 1; a.onclick = () => this.showTradeModal(); }
         }
-    }
-
-    // Edit straight from the detail view (no ghost modals)
-    editFromDetail(id) {
-        const o = document.getElementById('modalOverlay');
-        o.classList.remove('active');
-        o.innerHTML = '';
-        this.showTradeModal(id);
-    }
-
-    async showTradeDetail(id) {
-        if (this._modalBusy()) return;               // ← hard stop
-        this._modalReset();
-        const trade = await db.getTrade(id);
-        if (!trade) return;
-
-        const overlay = document.getElementById('modalOverlay');
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-header">
-                <h2>${trade.symbol} - ${trade.direction.toUpperCase()}</h2>
-                <button class="modal-close" onclick="app.closeModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="trade-detail">
-                    <div class="trade-detail-section">
-                        <h4>Trade Info</h4>
-                        <div class="trade-detail-grid">
-                            <div><strong>Entry:</strong> ${formatNumber(trade.entryPrice, 5)}</div>
-                            <div><strong>Exit:</strong> ${formatNumber(trade.exitPrice, 5)}</div>
-                            <div><strong>Stop Loss:</strong> ${trade.stopLoss ? formatNumber(trade.stopLoss, 5) : 'N/A'}</div>
-                            <div><strong>Size:</strong> ${trade.positionSize || 'N/A'}</div>
-                            <div><strong>Date:</strong> ${formatDate(trade.entryDate)}</div>
-                            <div><strong>Strategy:</strong> ${trade.strategy || 'N/A'}</div>
-                        </div>
-                    </div>
-                    <div class="trade-detail-section">
-                        <h4>Results</h4>
-                        <div class="trade-detail-grid">
-                            <div><strong>P/L:</strong> <span class="${trade.profitLoss >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(trade.profitLoss)}</span></div>
-                            <div><strong>R Multiple:</strong> ${formatNumber(trade.rMultiple, 2)}R</div>
-                        </div>
-                    </div>
-                    <div class="trade-detail-section">
-                        <h4>Psychology</h4>
-                        <div class="trade-detail-grid">
-                            <div><strong>Emotion:</strong> ${trade.emotionBefore || 'N/A'}</div>
-                            <div><strong>Discipline:</strong> ${trade.discipline || 'N/A'}/10</div>
-                            <div><strong>Confidence:</strong> ${trade.confidence || 'N/A'}/10</div>
-                        </div>
-                    </div>
-                    ${trade.notes ? `<div class="trade-detail-section"><h4>Notes</h4><p>${trade.notes}</p></div>` : ''}
-                    ${trade.screenshot ? `
-                    <div class="trade-detail-section">
-                        <h4>Chart Screenshot</h4>
-                        <div class="trade-screenshot-container">
-                            <img src="${trade.screenshot}" alt="Trade Chart">
-                        </div>
-                    </div>` : ''}
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="app.closeModal()">Close</button>
-                <button class="btn btn-primary" onclick="trades.editFromDetail(${trade.id})">Edit Trade</button>
-            </div>
-        `;
-        overlay.appendChild(modal);
-        overlay.classList.add('active');
-    }
-}
-
-const trades = new Trades();
-
-// Instant, ghost-free closeModal (overrides the delayed version)
-window.addEventListener('load', () => {
-    if (typeof app !== 'undefined') {
-        app.closeModal = function () {
-            const overlay = document.getElementById('modalOverlay');
-            overlay.classList.remove('active');
-            overlay.innerHTML = '';
-        };
-    }
-});
+    };
+    window.trades = trades;
+    if (document.readyState === 'complete') trades.bindButtons();
+    else window.addEventListener('load', () => trades.bindButtons());
+})();
