@@ -41,7 +41,7 @@
         [['💯', '100 Trades', 'Record 100 trades', trades.length >= 100],
          ['🥇', '10 Wins', 'Book 10 winning trades', wins >= 10],
          ['🔥', '7 Streak', '7 winning trades in a row', maxW >= 7],
-         ['📆', 'Green Month', 'Finish any month profitable', profMonth],
+         ['', 'Green Month', 'Finish any month profitable', profMonth],
          ['🧼', 'Clean Week', '7 days trading, zero rule breaks', cleanWeek]
         ].forEach(([i, t, d, ok]) => grid.insertAdjacentHTML('beforeend', `<div class="ach ${ok ? 'unlocked' : ''}" title="${d}"><div class="ico">${i}</div><span>${t}</span></div>`));
     }).observe(document.body, { childList: true, subtree: true });
