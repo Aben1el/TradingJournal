@@ -881,3 +881,90 @@ body.sb-collapsed .sync-pill .dot { margin: 0; }
 }
 .tv-fab:active { transform: scale(.92); }
 @media (max-width: 768px) { .tv-fab { display: flex; } }
+
+/* ============ TRADE HISTORY FILTERS — PREMIUM STYLING ============ */
+#trades .filters-bar {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    margin-bottom: 1rem;
+}
+
+#trades .filters-bar input[type="text"],
+#trades .filters-bar select,
+#trades .filters-bar input[type="date"] {
+    min-height: 42px;
+    padding: 0.6rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.85rem;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+#trades .filters-bar input[type="text"]:focus,
+#trades .filters-bar select:focus,
+#trades .filters-bar input[type="date"]:focus {
+    border-color: rgba(99, 102, 241, 0.5);
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+#trades .filters-bar input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+}
+
+#trades .filters-bar select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a8a93' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    padding-right: 2.2rem;
+}
+
+#trades .filters-bar input[type="date"] {
+    cursor: pointer;
+}
+
+/* Light theme adjustments */
+html[data-theme="light"] #trades .filters-bar {
+    background: rgba(20, 22, 40, 0.03);
+}
+
+html[data-theme="light"] #trades .filters-bar input[type="text"],
+html[data-theme="light"] #trades .filters-bar select,
+html[data-theme="light"] #trades .filters-bar input[type="date"] {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(146, 156, 176, 0.3);
+}
+
+html[data-theme="light"] #trades .filters-bar input[type="text"]:focus,
+html[data-theme="light"] #trades .filters-bar select:focus,
+html[data-theme="light"] #trades .filters-bar input[type="date"]:focus {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(99, 102, 241, 0.5);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    #trades .filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #trades .filters-bar input[type="text"],
+    #trades .filters-bar select,
+    #trades .filters-bar input[type="date"] {
+        width: 100%;
+    }
+}
