@@ -10,10 +10,14 @@
     document.head.appendChild(st);
     const wait = () => new Promise(r => { if (window.tvClient) return r(); window.addEventListener('tv-client-ready', () => r(), { once: true }); setTimeout(() => r(), 2500); });
 
-    /* ---- All Accounts overview in switcher ---- */
+        /* ---- All Accounts overview in switcher ---- */
+    let accSumAdded = false;
     new MutationObserver(async () => {
         const menu = document.querySelector('.acc-menu');
-        if (!menu || menu.querySelector('.acc-sum') || !window.tvClient) return;
+        if (!menu || accSumAdded || !window.tvClient) return;
+        accSumAdded = true;
+        // Remove any duplicates first
+        menu.querySelectorAll('.acc-sum').forEach(el => el.remove());
         const { data: accs } = await tvClient.from('trading_accounts').select('id,starting_balance');
         const { data: all } = await tvClient.from('trades').select('account_id,profit_loss');
         let bal = 0, pl = 0;
