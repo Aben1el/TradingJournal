@@ -1,4 +1,4 @@
-// ============ TradeVault UX: real account balance + skeleton loaders v2 ============
+// ============ TradeVault UX: real account balance + skeleton loaders v3 ============
 (function () {
     const st = document.createElement('style');
     st.textContent = `
@@ -36,78 +36,63 @@
         });
     }
 
-    /* ================= 2. SKELETON LOADERS v2 ================= */
+    /* ================= 2. SKELETON LOADERS v3 ================= */
     function skeletonHTML(secId) {
-        if (secId === 'dashboard') return `<div class="skel-wrap"><div class="skel-row"><div class="skel h1"></div><div class="skel h1"></div><div class="skel h1"></div><div class="skel h1"></div></div><div class="skel h2"></div><div class="skel-row two"><div class="skel h3"></div><div class="skel h3"></div></div></div>`;
-        if (secId === 'journal') return `<div class="skel-wrap"><div class="skel-row three"><div class="skel h3"></div><div class="skel h3"></div><div class="skel h3"></div></div><div class="skel-row three"><div class="skel h3"></div><div class="skel h3"></div><div class="skel h3"></div></div></div>`;
-        if (secId === 'trades') return `<div class="skel-wrap"><div class="skel line"></div><div class="skel line"></div><div class="skel line"></div><div class="skel line"></div><div class="skel line"></div><div class="skel line"></div></div>`;
-        if (secId === 'calculators') return `<div class="skel-wrap"><div class="skel-row three"><div class="skel calc"></div><div class="skel calc"></div><div class="skel calc"></div></div><div class="skel-row two"><div class="skel calc"></div><div class="skel calc"></div></div></div>`;
-        if (secId === 'analytics' || secId === 'strategies' || secId === 'goals') return `<div class="skel-wrap"><div class="skel-row two"><div class="skel h2"></div><div class="skel h2"></div></div><div class="skel-row two"><div class="skel h3"></div><div class="skel h3"></div></div></div>`;
-        return `<div class="skel-wrap"><div class="skel-row two"><div class="skel h3"></div><div class="skel h3"></div></div><div class="skel h2"></div></div>`;
+        if (secId === 'dashboard') return `<div class="skel-row"><div class="skel h1"></div><div class="skel h1"></div><div class="skel h1"></div><div class="skel h1"></div></div><div class="skel h2"></div><div class="skel-row two"><div class="skel h3"></div><div class="skel h3"></div></div>`;
+        if (secId === 'journal') return `<div class="skel-row three"><div class="skel h3"></div><div class="skel h3"></div><div class="skel h3"></div></div><div class="skel-row three"><div class="skel h3"></div><div class="skel h3"></div><div class="skel h3"></div></div>`;
+        if (secId === 'trades') return `<div class="skel line"></div><div class="skel line"></div><div class="skel line"></div><div class="skel line"></div><div class="skel line"></div><div class="skel line"></div>`;
+        if (secId === 'calculators') return `<div class="skel-row three"><div class="skel calc"></div><div class="skel calc"></div><div class="skel calc"></div></div><div class="skel-row two"><div class="skel calc"></div><div class="skel calc"></div></div>`;
+        if (secId === 'analytics' || secId === 'strategies' || secId === 'goals') return `<div class="skel-row two"><div class="skel h2"></div><div class="skel h2"></div></div><div class="skel-row two"><div class="skel h3"></div><div class="skel h3"></div></div>`;
+        return `<div class="skel-row two"><div class="skel h3"></div><div class="skel h3"></div></div><div class="skel h2"></div>`;
     }
 
-    function injectSkeleton(sec) {
+    function showSkeleton(sec) {
         if (!sec) return;
-        // If there's already real content (not just a header), wrap it — don't stack on top
-        const existing = sec.querySelector('.skel-wrap');
-        if (existing) return;
-
-        const wrap = document.createElement('div');
-        wrap.className = 'skel-wrap';
-        wrap.innerHTML = skeletonHTML(sec.id);
-        const sk = wrap.firstElementChild;
-
-        // Find the real content container (not headers)
-        const header = sec.querySelector('.section-header, .dash-header');
-        const realContent = header ? header.nextElementSibling : sec.firstElementChild;
-
-        // If real content exists and isn't empty, insert skeleton BEFORE it so it appears in the right place
-        if (realContent && realContent !== header) {
-            header ? header.after(sk) : sec.prepend(sk);
-        } else {
-            sec.appendChild(sk);
+        // Remove any existing skeleton
+        let wrap = sec.querySelector('.skel-wrap');
+        if (!wrap) {
+            wrap = document.createElement('div');
+            wrap.className = 'skel-wrap';
+            wrap.id = 'skelWrap';
+            const header = sec.querySelector('.section-header, .dash-header');
+            if (header) header.after(wrap); else sec.prepend(wrap);
         }
+        wrap.innerHTML = skeletonHTML(sec.id);
 
-        watchClear(sec);
-    }
-
-    function watchClear(sec) {
-        let done = false;
-        const kill = () => {
-            if (done) return;
-            done = true;
-            // Remove skeleton only after real content has rendered
-            setTimeout(() => {
-                sec.querySelectorAll('.skel-wrap, .skel-row, .skel').forEach(el => el.remove());
-            }, 200);
-            mo.disconnect();
-            clearTimeout(to);
-        };
-        const mo = new MutationObserver((muts) => {
-            for (const m of muts) {
-                for (const n of m.addedNodes) {
-                    if (n.nodeType === 1 && !n.classList.contains('skel-wrap') && !n.classList.contains('skel') && !n.classList.contains('skel-row')) {
-                        // Real content added — wait a tick then clear skeletons
-                        setTimeout(kill, 300);
-                        return;
-                    }
-                }
+        // Hide all real content (except header)
+        const header = sec.querySelector('.section-header, .dash-header');
+        const children = [...sec.children];
+        children.forEach(child => {
+            if (child !== header && child !== wrap && !child.classList.contains('skel-wrap')) {
+                child.dataset.skelHidden = '1';
+                child.style.display = 'none';
             }
         });
-        mo.observe(sec, { childList: true, subtree: true });
-        const to = setTimeout(kill, 1800);
     }
 
+    function hideSkeleton(sec) {
+        const wrap = sec.querySelector('.skel-wrap');
+        if (wrap) wrap.remove();
+        // Restore hidden content
+        sec.querySelectorAll('[data-skel-hidden="1"]').forEach(el => {
+            el.style.display = '';
+            delete el.dataset.skelHidden;
+        });
+    }
+
+    function triggerSkeleton(sec) {
+        if (!sec) return;
+        showSkeleton(sec);
+        // Auto-hide after short delay (simulates load)
+        setTimeout(() => hideSkeleton(sec), 600);
+    }
+
+    // Intercept navigation clicks
     document.addEventListener('click', (e) => {
         const nav = e.target.closest('.nav-item');
         if (nav) {
             const sec = document.getElementById(nav.dataset.section);
-            if (sec) injectSkeleton(sec);
-            return;
-        }
-        if (e.target.closest('#viewAllTradesBtn')) {
-            const sec = document.getElementById('trades');
-            if (sec) injectSkeleton(sec);
+            if (sec) triggerSkeleton(sec);
         }
     }, true);
 
@@ -128,8 +113,6 @@
         new MutationObserver(() => {
             if (mc.style.display === 'block') {
                 syncBalance();
-                const active = document.querySelector('.section.active');
-                if (active && !active.querySelector('.skel-wrap')) injectSkeleton(active);
             }
         }).observe(mc, { attributes: true, attributeFilter: ['style'] });
     }
