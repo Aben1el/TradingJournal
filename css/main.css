@@ -998,3 +998,20 @@ body.sb-collapsed .nav-item {
 body.sb-collapsed .nav-item span {
     display: none;
 }
+
+/* ============ HIDE THEME BUTTON IN COLLAPSED SIDEBAR ============ */
+body.sb-collapsed .theme-toggle,
+body.sb-collapsed [data-theme-toggle],
+body.sb-collapsed .sidebar-top button:first-child,
+body.sb-collapsed .sidebar-header button:first-child,
+body.sb-collapsed .top-bar .theme-btn,
+body.sb-collapsed .sidebar-top .btn:first-child {
+    display: none !important;
+}
+
+/* Make sure only the collapse/expand button remains */
+body.sb-collapsed .sidebar-top {
+    display: flex;
+    justify-content: center;
+    padding: .5rem 0;
+}
