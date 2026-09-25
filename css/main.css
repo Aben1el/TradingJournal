@@ -1037,71 +1037,69 @@ body.sb-collapsed .sidebar-top {
     stroke-linejoin: round;
 }
 
-/* Collapsed state: center icons only */
+/* ============ PROFESSIONAL SIDEBAR ICONS ============ */
+
+/* Icon container */
+.nav-item .nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-right: 0.9rem;
+    flex-shrink: 0;
+}
+
+/* All SVG icons - consistent styling */
+.nav-item .nav-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.75;
+}
+
+/* Active state */
+.nav-item.active .nav-icon svg {
+    opacity: 1;
+    stroke-width: 2.5;
+}
+
+/* Hover state */
+.nav-item:hover .nav-icon svg {
+    opacity: 1;
+}
+
+/* Text alignment */
+.nav-item span:not(.nav-icon) {
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+
+/* Collapsed state - icons only, centered */
 body.sb-collapsed .nav-item {
     justify-content: center;
-    padding: 0.8rem 0;
+    padding: 0.75rem 0;
 }
 
 body.sb-collapsed .nav-item .nav-icon {
     margin-right: 0;
 }
 
-body.sb-collapsed .nav-item span {
+body.sb-collapsed .nav-item span:not(.nav-icon) {
     display: none;
 }
 
-/* ============ SIDEBAR ICON FIX (CSS-ONLY) ============ */
-
-/* Hide all existing icons */
-.nav-item .nav-icon,
-.nav-item svg,
-.nav-item img,
-.nav-item i {
-    display: none !important;
+body.sb-collapsed .nav-item .nav-icon svg {
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
 }
 
-/* Add clean Unicode icons that match your design */
-.nav-item[data-section="dashboard"]::before { content: '⊞'; }
-.nav-item[data-section="journal"]::before { content: '◫'; }
-.nav-item[data-section="reviews"]::before { content: '◰'; }
-.nav-item[data-section="trades"]::before { content: '⤴'; }
-.nav-item[data-section="strategies"]::before { content: '★'; }
-.nav-item[data-section="analytics"]::before { content: '▤'; }
-.nav-item[data-section="psychology"]::before { content: '◉'; }
-.nav-item[data-section="calculators"]::before { content: '▦'; }
-.nav-item[data-section="goals"]::before { content: '◎'; }
-.nav-item[data-section="settings"]::before { content: '⚙'; }
-
-/* Style the new icons */
-.nav-item::before {
-    display: inline-block;
-    width: 22px;
-    height: 22px;
-    margin-right: 0.8rem;
-    font-size: 1.2rem;
-    line-height: 1;
-    text-align: center;
-    vertical-align: middle;
-    opacity: 0.85;
-}
-
-.nav-item.active::before,
-.nav-item:hover::before {
+body.sb-collapsed .nav-item.active .nav-icon svg {
     opacity: 1;
-}
-
-/* Collapsed state: center icons */
-body.sb-collapsed .nav-item {
-    justify-content: center;
-    padding: 0.8rem 0;
-}
-
-body.sb-collapsed .nav-item::before {
-    margin-right: 0;
-    font-size: 1.4rem;
-}
-
-body.sb-collapsed .nav-item span {
-    display: none;
 }
