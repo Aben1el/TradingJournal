@@ -968,3 +968,33 @@ html[data-theme="light"] #trades .filters-bar input[type="date"]:focus {
         width: 100%;
     }
 }
+/* ============ COLLAPSED SIDEBAR: HIDE NON-ESSENTIALS ============ */
+body.sb-collapsed .acc-switcher,
+body.sb-collapsed .acc-current-btn,
+body.sb-collapsed .sync-pill,
+body.sb-collapsed .theme-toggle,
+body.sb-collapsed .sidebar-top .theme-btn,
+body.sb-collapsed .sidebar-footer .theme-btn,
+body.sb-collapsed .sidebar-header .theme-btn {
+    display: none !important;
+}
+
+body.sb-collapsed .sidebar-top,
+body.sb-collapsed .sidebar-footer {
+    justify-content: center;
+    padding: .4rem 0;
+}
+
+/* Keep only the nav icons centered */
+body.sb-collapsed .nav-list {
+    padding: .5rem 0;
+}
+
+body.sb-collapsed .nav-item {
+    justify-content: center;
+    padding: .7rem 0;
+}
+
+body.sb-collapsed .nav-item span {
+    display: none;
+}
