@@ -1016,44 +1016,35 @@ body.sb-collapsed .sidebar-top {
     padding: .5rem 0;
 }
 
-/* ============ SIDEBAR ICON ALIGNMENT ============ */
-/* Hide default icons */
-.nav-item .nav-icon,
-.nav-item svg,
-.nav-item i {
-    display: none;
-}
-
-/* Add custom emoji icons that match perfectly */
-.nav-item[data-section="dashboard"]::before { content: '📊'; }
-.nav-item[data-section="journal"]::before { content: '📓'; }
-.nav-item[data-section="reviews"]::before { content: ''; }
-.nav-item[data-section="trades"]::before { content: '📈'; }
-.nav-item[data-section="strategies"]::before { content: '⭐'; }
-.nav-item[data-section="analytics"]::before { content: '📉'; }
-.nav-item[data-section="psychology"]::before { content: '🧠'; }
-.nav-item[data-section="calculators"]::before { content: ''; }
-.nav-item[data-section="goals"]::before { content: '🎯'; }
-.nav-item[data-section="settings"]::before { content: '⚙️'; }
-
-/* Style the new icons */
-.nav-item::before {
-    font-size: 1.1rem;
+/* ============ SIDEBAR SVG ICONS ============ */
+.nav-item .nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
     margin-right: 0.8rem;
-    display: inline-block;
-    width: 24px;
-    text-align: center;
+    flex-shrink: 0;
 }
 
-/* Collapsed state: center the icons */
+.nav-item .nav-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Collapsed state: center icons only */
 body.sb-collapsed .nav-item {
     justify-content: center;
     padding: 0.8rem 0;
 }
 
-body.sb-collapsed .nav-item::before {
+body.sb-collapsed .nav-item .nav-icon {
     margin-right: 0;
-    font-size: 1.3rem;
 }
 
 body.sb-collapsed .nav-item span {
