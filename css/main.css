@@ -1050,3 +1050,58 @@ body.sb-collapsed .nav-item .nav-icon {
 body.sb-collapsed .nav-item span {
     display: none;
 }
+
+/* ============ SIDEBAR ICON FIX (CSS-ONLY) ============ */
+
+/* Hide all existing icons */
+.nav-item .nav-icon,
+.nav-item svg,
+.nav-item img,
+.nav-item i {
+    display: none !important;
+}
+
+/* Add clean Unicode icons that match your design */
+.nav-item[data-section="dashboard"]::before { content: '⊞'; }
+.nav-item[data-section="journal"]::before { content: '◫'; }
+.nav-item[data-section="reviews"]::before { content: '◰'; }
+.nav-item[data-section="trades"]::before { content: '⤴'; }
+.nav-item[data-section="strategies"]::before { content: '★'; }
+.nav-item[data-section="analytics"]::before { content: '▤'; }
+.nav-item[data-section="psychology"]::before { content: '◉'; }
+.nav-item[data-section="calculators"]::before { content: '▦'; }
+.nav-item[data-section="goals"]::before { content: '◎'; }
+.nav-item[data-section="settings"]::before { content: '⚙'; }
+
+/* Style the new icons */
+.nav-item::before {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    margin-right: 0.8rem;
+    font-size: 1.2rem;
+    line-height: 1;
+    text-align: center;
+    vertical-align: middle;
+    opacity: 0.85;
+}
+
+.nav-item.active::before,
+.nav-item:hover::before {
+    opacity: 1;
+}
+
+/* Collapsed state: center icons */
+body.sb-collapsed .nav-item {
+    justify-content: center;
+    padding: 0.8rem 0;
+}
+
+body.sb-collapsed .nav-item::before {
+    margin-right: 0;
+    font-size: 1.4rem;
+}
+
+body.sb-collapsed .nav-item span {
+    display: none;
+}
